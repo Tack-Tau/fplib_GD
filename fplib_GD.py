@@ -654,7 +654,7 @@ def get_CG_norm_fp(lseg, rxyz, rcov, amp):
     x0 = r_init
     f = get_norm_fp(lseg, rxyz, rcov, amp)
     gradf = get_grad_norm_fp(lseg, rxyz, rcov, amp)
-    return optimize.minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
+    return minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
 
 
 
