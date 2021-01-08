@@ -617,14 +617,44 @@ def get_D_fp_mat(lseg, rxyz, rcov, amp):
 
 
 
-
-
 # @numba.jit()
 def get_null_D_fp(lseg, rxyz, rcov, amp):
     D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
     null_D_fp = null_space(D_fp_mat)
     return null_D_fp
 
+
+# @numba.jit()
+def get_norm_fp(lseg, rxyz, rcov, amp):
+    nat = len(rxyz)
+    r_vec = rxyz.reshape(3*nat, 1)
+    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
+    fp_vec = np.matmul(D_fp_mat, r_vec)
+    norm_fp = np.linalg.norm(fp_vec)
+    return norm_fp
+
+
+# @numba.jit()
+def get_grad_norm_fp(lseg, rxyz, rcov, amp):
+    grad_norm_fp = []
+    nat=len(rxyz)
+    r_vec=rxyz.reshape(3*nat, 1)
+    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
+    fp_vec=np.matmul(D_fp_mat, r_vec)
+    norm_fp = get_norm_fp(lseg, rxyz, rcov, amp)
+    for i in range(3*nat):
+        grad_norm_fp[i] = np.matmul( np.transpose(D_fp_mat[:, i]), r_vec ) / norm_fp
+    return grad_norm_fp
+
+
+
+# @numba.jit()
+def get_CG_norm_fp(lseg, rxyz, rcov, amp):
+    r_init = np.zeros_like( rxyz.reshape(3*nat, 1) )
+    x0 = r_init
+    f = get_norm_fp(lseg, rxyz, rcov, amp)
+    gradf = get_grad_norm_fp(lseg, rxyz, rcov, amp)
+    return optimize.minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
 
 
 
