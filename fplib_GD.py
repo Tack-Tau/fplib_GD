@@ -636,9 +636,9 @@ def get_norm_fp(lseg, rxyz, rcov, amp):
 
 # @numba.jit()
 def get_grad_norm_fp(lseg, rxyz, rcov, amp):
-    grad_norm_fp = []
     nat=len(rxyz)
     r_vec=rxyz.reshape(3*nat, 1)
+    grad_norm_fp = zeros_like(r_vec)
     D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
     fp_vec=np.matmul(D_fp_mat, r_vec)
     norm_fp = get_norm_fp(lseg, rxyz, rcov, amp)
