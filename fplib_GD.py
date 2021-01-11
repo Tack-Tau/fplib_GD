@@ -657,6 +657,87 @@ def get_CG_norm_fp(lseg, rxyz, rcov, amp):
     return minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
 
 
+'''
+Self-contained implementation of non-linear optimization algorithms:
+
+- steepest descent
+- newton's method
+- conjuage gradient
+- BFGS
+- l-BFGS
+
+By Yiren Lu, Jun 2017
+https://github.com/yrlu/non-convex
+
+Reference:
+https://github.com/tamland/non-linear-optimization
+https://www.cs.utexas.edu/~huangqx/2017_CS395T_Numerical_Optimization_Lecture_5.pdf
+
+# line-search conditions
+def wolfe(f, g, xk, alpha, pk):
+    c1 = 1e-4
+    return f(xk + alpha * pk) <= f(xk) + c1 * alpha * np.dot(g(xk), pk)
+
+
+def strong_wolfe(f, g, xk, alpha, pk, c2):
+    # typically, c2 = 0.9 when using Newton or quasi-Newton's method.
+    #            c2 = 0.1 when using non-linear conjugate gradient method.
+    return wolfe(f, g, xk, alpha, pk) and abs( \
+        np.dot(g(xk + alpha * pk), pk)) <= c2 * abs(np.dot(g(xk), pk))
+
+
+def gold_stein(f, g, xk, alpha, pk, c):
+    return (f(xk) + (1 - c) * alpha * np.dot(g(xk), pk) <= f(xk + alpha * pk) \
+           ) and (f(xk + alpha * pk) <= f(xk) + c * alpha * np.dot(g(xk), pk))
+
+
+# line-search step len
+def step_length(f, g, xk, alpha, pk, c2):
+    return interpolation(f, g,                                                 \
+                         lambda alpha: f(xk + alpha * pk),                     \
+                         lambda alpha: np.dot(g(xk + alpha * pk), pk),         \
+                         alpha, c2,                                            \
+                         lambda f, g, alpha, c2: strong_wolfe(f, g, xk, alpha, pk, c2))
+
+
+def interpolation(f, g, f_alpha, g_alpha, alpha, c2, strong_wolfe_alpha, iters=20):
+    # referred implementation here:
+    # https://github.com/tamland/non-linear-optimization
+    l = 0.0
+    h = 1.0
+    for i in xrange(iters):
+        if strong_wolfe_alpha(f, g, alpha, c2):
+            return alpha
+
+    half = (l + h) / 2
+    alpha = - g_alpha(l) * (h**2) / (2 * (f_alpha(h) - f_alpha(l) - g_alpha(l) * h))
+    if alpha < l or alpha > h:
+        alpha = half
+    if g_alpha(alpha) > 0:
+        h = alpha
+    elif g_alpha(alpha) <= 0:
+        l = alpha
+    return alpha
+
+
+# optimization algorithms
+def steepest_descent(f, grad, x0, iterations, error):
+    x = x0
+    x_old = x
+    c2 = 0.9
+    for i in xrange(iterations):
+        pk = -np.gradient(x)
+        alpha = step_length(f, grad, x, 1.0, pk, c2)
+        x = x + alpha * pk
+        if i % 10 == 0:
+            # print "  iter={}, grad={}, alpha={}, x={}, f(x)={}".format(i, pk, alpha, x, f(x))
+            print "  iter={}, x={}, f(x)={}".format(i, x, f(x))
+        if np.linalg.norm(x - x_old) < error:
+            break
+        x_old = x
+    return x, i
+'''
+
 
 # @numba.jit()
 def get_fp_nonperiodic(rxyz, znucls):
