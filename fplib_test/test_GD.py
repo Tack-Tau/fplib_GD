@@ -1,5 +1,3 @@
-#!/usr/bin/python -u
-
 import numpy as np
 import fplib_GD
 import sys
