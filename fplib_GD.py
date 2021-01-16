@@ -74,7 +74,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 # Derivative of <s_i | s_j>
                 if D_n == iat:
                     Dx_om[iat][jat] = -(4.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                else if D_n == jat:
+                elif D_n == jat:
                     Dx_om[iat][jat] =  (4.0*r) * d[0] * sji * amp[iat] * amp[jat]
                 else:
                     Dx_om[iat][jat] = 0.0
@@ -92,7 +92,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 D_n != 4*jat+2 and D_n != 4*jat:
                     Dx_om[4*iat][4*jat] = -(4.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat][4*jat] =  (4.0*r) * d[0] * sji * amp[iat] * amp[jat]
                 else:
@@ -104,15 +104,15 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -131,15 +131,15 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -165,7 +165,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+1][4*jat+3] = -(4.0*r) * d[0] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (1.0 * d[2]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat+2][4*jat+1] = -(4.0*r) * d[0] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -176,7 +176,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+2][4*jat+3] = -(4.0*r) * d[0] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dx_om[4*iat+3][4*jat+1] = -(4.0*r) * d[0] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -187,7 +187,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+3][4*jat+3] = -(4.0*r) * d[0] * stv \
                     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat+1][4*jat+1] = (4.0*r) * d[0] * stv \
                     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
@@ -198,7 +198,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+3][4*jat+1] = (4.0*r) * d[0] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat+1][4*jat+2] = (4.0*r) * d[0] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -209,7 +209,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+3][4*jat+2] = (4.0*r) * d[0] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dx_om[4*iat+1][4*jat+3] = (4.0*r) * d[0] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -248,7 +248,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 # Derivative of <s_i | s_j>
                 if D_n == iat:
                     Dy_om[iat][jat] = -(4.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                else if D_n == jat:
+                elif D_n == jat:
                     Dy_om[iat][jat] =  (4.0*r) * d[1] * sji * amp[iat] * amp[jat]
                 else:
                     Dy_om[iat][jat] = 0.0
@@ -266,7 +266,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 D_n != 4*jat+2 and D_n != 4*jat:
                     Dy_om[4*iat][4*jat] = -(4.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat][4*jat] =  (4.0*r) * d[1] * sji * amp[iat] * amp[jat]
                 else:
@@ -278,15 +278,15 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -305,15 +305,15 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -339,7 +339,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                     Dx_om[4*iat+1][4*jat+3] = -(4.0*r) * d[1] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat+2][4*jat+1] = -(4.0*r) * d[1] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -350,7 +350,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                     Dy_om[4*iat+2][4*jat+3] = -(4.0*r) * d[1] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (1.0 * d[2]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dy_om[4*iat+3][4*jat+1] = -(4.0*r) * d[1] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -361,7 +361,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                     Dy_om[4*iat+3][4*jat+3] = -(4.0*r) * d[1] * stv \
                     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat+1][4*jat+1] = (4.0*r) * d[1] * stv \
                     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
@@ -372,7 +372,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                     Dy_om[4*iat+3][4*jat+1] = (4.0*r) * d[1] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat+1][4*jat+2] = (4.0*r) * d[1] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -383,7 +383,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                     Dy_om[4*iat+3][4*jat+2] = (4.0*r) * d[1] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dy_om[4*iat+1][4*jat+3] = (4.0*r) * d[1] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -408,7 +408,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
     return Dy_om
 
 # @numba.jit()
-def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
+def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
     # s orbital only lseg == 1
     nat = len(rxyz)    
     if lseg == 1:
@@ -440,7 +440,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 D_n != 4*jat+2 and D_n != 4*jat:
                     Dz_om[4*iat][4*jat] = -(4.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat][4*jat] =  (4.0*r) * d[2] * sji * amp[iat] * amp[jat]
                 else:
@@ -452,15 +452,15 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -479,15 +479,15 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                else if D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
                     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
@@ -513,7 +513,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dz_om[4*iat+1][4*jat+3] = -(4.0*r) * d[2] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (1.0 * d[0]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat+2][4*jat+1] = -(4.0*r) * d[2] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -524,7 +524,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dz_om[4*iat+2][4*jat+3] = -(4.0*r) * d[2] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (1.0 * d[1]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
+                elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
                 and D_n != 4*jat+2 and D_n != 4*jat+3:
                     Dz_om[4*iat+3][4*jat+1] = -(4.0*r) * d[2] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -535,7 +535,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dz_om[4*iat+3][4*jat+3] = -(4.0*r) * d[2] * stv \
                     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
                     stv * (2.0 * d[2]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat+1][4*jat+1] = (4.0*r) * d[2] * stv \
                     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
@@ -546,7 +546,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dz_om[4*iat+3][4*jat+1] = (4.0*r) * d[2] * stv \
                     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
                     stv * (-1.0 * d[0]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat+1][4*jat+2] = (4.0*r) * d[2] * stv \
                     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
@@ -557,7 +557,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                     Dz_om[4*iat+3][4*jat+2] = (4.0*r) * d[2] * stv \
                     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
                     stv * (-1.0 * d[1]        ) * amp[iat] * amp[jat]
-                else if D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
+                elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
                 and D_n != 4*iat+2 and D_n != 4*iat+3:
                     Dz_om[4*iat+1][4*jat+3] = (4.0*r) * d[2] * stv \
                     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
@@ -586,15 +586,15 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     V_om = Varr_om[:, D_n-1]
-    if x==0:
+    if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
         Dx_mul_V_om = np.matmul(Dx_om, V_om)
         D_fp = np.matmul(V_om.T, Dx_mul_V_om)
-    else if x==1:
+    elif x == 1:
         Dy_om = get_Dy_gom(lseg, rxyz, rcov, amp, D_n)
         Dy_mul_V_om = np.matmul(Dy_om, V_om)
         D_fp = np.matmul(V_om.T, Dy_mul_V_om)
-    else if x==2:
+    elif x == 2:
         Dz_om = get_Dz_gom(lseg, rxyz, rcov, amp, D_n)
         Dz_mul_V_om = np.matmul(Dz_om, V_om)
         D_fp = np.matmul(V_om.T, Dz_mul_V_om)
