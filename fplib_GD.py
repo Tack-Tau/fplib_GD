@@ -422,7 +422,7 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
                 # Derivative of <s_i | s_j>
                 if D_n == iat:
                     Dz_om[iat][jat] = -(4.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                else if D_n == jat:
+                elif D_n == jat:
                     Dz_om[iat][jat] =  (4.0*r) * d[2] * sji * amp[iat] * amp[jat]
                 else:
                     Dz_om[iat][jat] = 0.0
