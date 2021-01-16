@@ -808,7 +808,8 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
                                     # print il+lseg*(n_sphere-1)
                                     ind[il+lseg*(n_sphere-1)] = ityp_sphere * l
                                 else:
-                                    ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
+                                    ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
+                                    # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
         n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
         # full overlap matrix
