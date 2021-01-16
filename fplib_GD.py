@@ -606,6 +606,7 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
 def get_D_fp_mat(lseg, rxyz, rcov, amp):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
+    lamda_om = np.real(lamda_om)
     N = len(lamda_om)
     nat = len(rxyz)
     for i in range(N):
@@ -655,6 +656,83 @@ def get_CG_norm_fp(lseg, rxyz, rcov, amp):
     f = get_norm_fp(lseg, rxyz, rcov, amp)
     gradf = get_grad_norm_fp(lseg, rxyz, rcov, amp)
     return minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
+
+
+# @numba.jit()
+def get_fpCG(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
+    if lmax == 0:
+        lseg = 1
+        l = 1
+    else:
+        lseg = 4
+        l = 2
+    ixyz = get_ixyz(lat, cutoff)
+    NC = 3
+    wc = cutoff / np.sqrt(2.* NC)
+    fc = 1.0 / (2.0 * NC * wc**2)
+    nat = len(rxyz)
+    cutoff2 = cutoff**2 
+    
+    n_sphere_list = []
+    lfp = []
+    sfp = []
+    for iat in range(nat):
+        rxyz_sphere = []
+        rcov_sphere = []
+        ind = [0] * (lseg * nx)
+        amp = []
+        xi, yi, zi = rxyz[iat]
+        n_sphere = 0
+        for jat in range(nat):
+            for ix in range(-ixyz, ixyz+1):
+                for iy in range(-ixyz, ixyz+1):
+                    for iz in range(-ixyz, ixyz+1):
+                        xj = rxyz[jat][0] + ix*lat[0][0] + iy*lat[1][0] + iz*lat[2][0]
+                        yj = rxyz[jat][1] + ix*lat[0][1] + iy*lat[1][1] + iz*lat[2][1]
+                        zj = rxyz[jat][2] + ix*lat[0][2] + iy*lat[1][2] + iz*lat[2][2]
+                        d2 = (xj-xi)**2 + (yj-yi)**2 + (zj-zi)**2
+                        if d2 <= cutoff2:
+                            n_sphere += 1
+                            if n_sphere > nx:
+                                print ("FP WARNING: the cutoff is too large.")
+                            amp.append((1.0-d2*fc)**NC)
+                            # print (1.0-d2*fc)**NC
+                            rxyz_sphere.append([xj, yj, zj])
+                            rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2]) 
+                            if jat == iat and ix == 0 and iy == 0 and iz == 0:
+                                ityp_sphere = 0
+                            else:
+                                ityp_sphere = types[jat]
+                            for il in range(lseg):
+                                if il == 0:
+                                    # print len(ind)
+                                    # print ind
+                                    # print il+lseg*(n_sphere-1)
+                                    ind[il+lseg*(n_sphere-1)] = ityp_sphere * l
+                                else:
+                                    ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
+                                    # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
+        n_sphere_list.append(n_sphere)
+        rxyz_sphere = np.array(rxyz_sphere, float)
+        # full overlap matrix
+        # nid = lseg * n_sphere
+        # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+        # val, vec = np.linalg.eig(om)
+        # val = np.real(val)
+        # fp0 = np.zeros(nx*lseg)
+        # for i in range(len(val)):
+        #     fp0[i] = val[i]
+        # lfp.append(sorted(fp0))
+        # pvec = np.real(np.transpose(vec)[0])
+
+    print ("n_sphere_min", min(n_sphere_list))
+    print ("n_shpere_max", max(n_sphere_list)) 
+
+    res_CG = get_CG_norm_fp(lseg, rxyz_sphere, rcov_sphere, amp)
+    
+    return res_CG
+
+
 
 
 '''
