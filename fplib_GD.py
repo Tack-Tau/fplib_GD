@@ -613,11 +613,11 @@ def get_D_fp_mat(lseg, rxyz, rcov, amp):
     N = len(lamda_om)
     nat = len(rxyz)
     D_fp_mat = np.zeros((N, 3*nat))
-    for i in range(N):
-        for j in range(3*nat):
-            D_n = i
-            x = j % 3
-            D_fp_mat[i][j] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+    for iN in range(N):
+        for jat in range(3*nat):
+            D_n = iN
+            x = jat % 3
+            D_fp_mat[iN][jat] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
     return  D_fp_mat
 
 
@@ -647,8 +647,8 @@ def get_grad_norm_fp(lseg, rxyz, rcov, amp):
     D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
     fp_vec = np.matmul(D_fp_mat, r_vec)
     norm_fp = get_norm_fp(lseg, rxyz, rcov, amp)
-    for i in range(3*nat):
-        grad_norm_fp[i] = np.matmul( np.transpose(D_fp_mat[:, i]), r_vec ) / norm_fp
+    for iat in range(3*nat):
+        grad_norm_fp[iat] = np.matmul( np.transpose(D_fp_mat[:, iat]), r_vec ) / norm_fp
     return grad_norm_fp
 
 
