@@ -585,6 +585,7 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
 def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
+    lamda_om = np.real(lamda_om)
     V_om = Varr_om[:, D_n-1]
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
@@ -609,6 +610,7 @@ def get_D_fp_mat(lseg, rxyz, rcov, amp):
     lamda_om = np.real(lamda_om)
     N = len(lamda_om)
     nat = len(rxyz)
+    D_fp_mat = np.full((N, 3*nat), 1+j)
     for i in range(N):
         for j in range(3*nat):
             D_n = j
@@ -651,6 +653,7 @@ def get_grad_norm_fp(lseg, rxyz, rcov, amp):
 
 # @numba.jit()
 def get_CG_norm_fp(lseg, rxyz, rcov, amp):
+    nat = len(rxyz)
     r_init = np.zeros_like( rxyz.reshape(3*nat, 1) )
     x0 = r_init
     f = get_norm_fp(lseg, rxyz, rcov, amp)
