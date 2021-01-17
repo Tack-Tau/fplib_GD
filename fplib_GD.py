@@ -586,7 +586,7 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
-    V_om = Varr_om[:, D_n-1]
+    V_om = Varr_om[:, D_n]
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
         Dx_mul_V_om = np.matmul(Dx_om, V_om)
@@ -615,12 +615,9 @@ def get_D_fp_mat(lseg, rxyz, rcov, amp):
     D_fp_mat = np.zeros((N, 3*nat))
     for i in range(N):
         for j in range(3*nat):
-            if j <= N-1:
-                D_n = j
-                x = j % 3
-                D_fp_mat[i][j] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
-            else:
-                D_fp_mat[i][j] = 0
+            D_n = i
+            x = j % 3
+            D_fp_mat[i][j] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
     return  D_fp_mat
 
 
