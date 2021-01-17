@@ -585,7 +585,7 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
 def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
-    lamda_om = np.real(lamda_om)
+    # lamda_om = np.real(lamda_om)
     V_om = Varr_om[:, D_n-1]
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
@@ -601,21 +601,26 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
         D_fp = np.matmul(V_om.T, Dz_mul_V_om)
     else:
         print("Error: Wrong x value! x can only be 0,1,2")
+    
+    D_fp = np.real(D_fp)
     return D_fp
 
 # @numba.jit()
 def get_D_fp_mat(lseg, rxyz, rcov, amp):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
-    lamda_om = np.real(lamda_om)
+    # lamda_om = np.real(lamda_om)
     N = len(lamda_om)
     nat = len(rxyz)
-    D_fp_mat = np.full((N, 3*nat), 1+j)
+    D_fp_mat = np.zeros((N, 3*nat))
     for i in range(N):
         for j in range(3*nat):
-            D_n = j
-            x = j % 3
-            D_fp_mat[i][j]=get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+            if j <= N-1:
+                D_n = j
+                x = j % 3
+                D_fp_mat[i][j] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+            else:
+                D_fp_mat[i][j] = 0
     return  D_fp_mat
 
 
@@ -639,11 +644,11 @@ def get_norm_fp(lseg, rxyz, rcov, amp):
 
 # @numba.jit()
 def get_grad_norm_fp(lseg, rxyz, rcov, amp):
-    nat=len(rxyz)
-    r_vec=rxyz.reshape(3*nat, 1)
+    nat = len(rxyz)
+    r_vec = rxyz.reshape(3*nat, 1)
     grad_norm_fp = zeros_like(r_vec)
     D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
-    fp_vec=np.matmul(D_fp_mat, r_vec)
+    fp_vec = np.matmul(D_fp_mat, r_vec)
     norm_fp = get_norm_fp(lseg, rxyz, rcov, amp)
     for i in range(3*nat):
         grad_norm_fp[i] = np.matmul( np.transpose(D_fp_mat[:, i]), r_vec ) / norm_fp
@@ -658,7 +663,7 @@ def get_CG_norm_fp(lseg, rxyz, rcov, amp):
     x0 = r_init
     f = get_norm_fp(lseg, rxyz, rcov, amp)
     gradf = get_grad_norm_fp(lseg, rxyz, rcov, amp)
-    return minimize(f, x0, jac=gradf, method='CG', options={'gtol': 1e-8, 'disp': True})
+    return minimize(f, x0, jac = gradf, method = 'CG', options = {'gtol': 1e-8, 'disp': True})
 
 
 # @numba.jit()
