@@ -2,28 +2,7 @@ import numpy as np
 import fplib_GD
 import sys
 
-
-def readvasp(vp):
-    buff = []
-    with open(vp) as f:
-        for line in f:
-            buff.append(line.split())
-
-    lat = np.array(buff[2:5], float) 
-    try:
-        typt = np.array(buff[5], int)
-    except:
-        del(buff[5])
-        typt = np.array(buff[5], int)
-    nat = sum(typt)
-    pos = np.array(buff[7:7 + nat], float)
-    types = []
-    for i in range(len(typt)):
-        types += [i+1]*typt[i]
-    types = np.array(types, int)
-    rxyz = np.dot(pos, lat)
-    #rxyz = pos
-    return lat, rxyz, types
+# Move function `readvasp(vp)` from test set to `fplib_FD.py`
 
 def test4(v1, v2):
     ntyp = 1
@@ -31,9 +10,11 @@ def test4(v1, v2):
     lmax = 0
     cutoff = 6.5
     znucl = np.array([3], int)
-    lat1, rxyz1, types = readvasp(v1)
-    lat2, rxyz2, types = readvasp(v2)
+    lat1, rxyz1, types = fplib_GD.readvasp(v1)
+    lat2, rxyz2, types = fplib_GD.readvasp(v2)
     contract = False
+    iter_max = 100
+    atol = 1e-3
     res_CG1 = fplib_GD.get_fpCG(contract, ntyp, nx, lmax, lat1, rxyz1, types, znucl, cutoff)
     res_CG2 = fplib_GD.get_fpCG(contract, ntyp, nx, lmax, lat2, rxyz2, types, znucl, cutoff)
     print ('First fingerprint gradient descent: ', res_CG1)
