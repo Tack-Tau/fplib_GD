@@ -788,18 +788,18 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     return D_fp
 
 # @numba.jit()
-def get_D_fp_mat(lseg, rxyz, rcov, amp):
+def get_D_fp_mat(lseg, rxyz, rcov, amp, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     N = len(lamda_om)
     nat = len(rxyz)
     D_fp_mat = np.zeros((N, 3*nat))
-    for iN in range(N):
-        for jat in range(3*nat):
-            D_n = iN
-            x = jat % 3
-            D_fp_mat[iN][jat] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+    for i_N in range(N):
+        for j_n in range(3*nat):
+            D_n = i_N
+            x = j_n % 3
+            D_fp_mat[i_N][j_n] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
     return  D_fp_mat
 
 
