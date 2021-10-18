@@ -59,6 +59,8 @@ def get_gom(lseg, rxyz, rcov, amp):
     #             print ("ERROR", i, j, om[i][j], om[j][i])
     return om
 
+
+
 # @numba.jit()
 def kron_delta(i,j):
     if i == j:
@@ -66,6 +68,8 @@ def kron_delta(i,j):
     else:
         m = 0.0
     return m
+
+
 
 # @numba.jit()
 def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
@@ -299,6 +303,8 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 
     return Dx_om
 
+
+
 # @numba.jit()
 def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
     # s orbital only lseg == 1
@@ -530,6 +536,8 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 #     Dy_om[4*iat+3][4*jat+3] = 0.0
                 
     return Dy_om
+
+
 
 # @numba.jit()
 def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
@@ -763,50 +771,60 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
                 
     return Dz_om
 
+
+
 # @numba.jit()
 def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
-    V_om = Varr_om[:, D_n]
+    N_vec = len(Varr_om[0])
+    # D_fp = np.zeros(N_vec)
+    D_fp = np.zeros((N_vec, 1))
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
-        Dx_mul_V_om = np.matmul(Dx_om, V_om)
-        D_fp = np.matmul(V_om.T, Dx_mul_V_om)
+        for i in range(N_vec):
+            Dx_mul_V_om = np.matmul(Dx_om, Varr_om[:, i])
+            D_fp[i][0] = np.matmul(Varr_om[:, i].T, Dx_mul_V_om)
     elif x == 1:
         Dy_om = get_Dy_gom(lseg, rxyz, rcov, amp, D_n)
-        Dy_mul_V_om = np.matmul(Dy_om, V_om)
-        D_fp = np.matmul(V_om.T, Dy_mul_V_om)
+        for j in range(N_vec):
+            Dy_mul_V_om = np.matmul(Dy_om, Varr_om[:, j])
+            D_fp[j][0] = np.matmul(Varr_om[:, j].T, Dy_mul_V_om)
     elif x == 2:
         Dz_om = get_Dz_gom(lseg, rxyz, rcov, amp, D_n)
-        Dz_mul_V_om = np.matmul(Dz_om, V_om)
-        D_fp = np.matmul(V_om.T, Dz_mul_V_om)
+        for k in range(N_vec):
+            Dz_mul_V_om = np.matmul(Dz_om, Varr_om[:, k])
+            D_fp[k][0] = np.matmul(Varr_om[:, k].T, Dz_mul_V_om)
     else:
         print("Error: Wrong x value! x can only be 0,1,2")
     
-    D_fp = np.real(D_fp)
+    # D_fp = np.real(D_fp)
     return D_fp
+
 
 # @numba.jit()
 def get_D_fp_mat(lseg, rxyz, rcov, amp, D_n):
-    om = get_gom(lseg, rxyz, rcov, amp)
-    lamda_om, Varr_om = np.linalg.eig(om)
+    # om = get_gom(lseg, rxyz, rcov, amp)
+    # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
-    N = len(lamda_om)
+    # N = len(lamda_om)
     nat = len(rxyz)
     D_fp_mat = np.zeros((N, 3*nat))
-    for i_N in range(N):
-        for j_n in range(3*nat):
-            D_n = i_N
-            x = j_n % 3
-            D_fp_mat[i_N][j_n] = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+    for iat in range(3*nat):
+        D_n = iat
+        x = iat % 3
+        D_fp = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+        D_fp_mat[:, D_n] = D_fp
+        # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
 
 
-
+# Previous CG process
+'''
 # @numba.jit()
 def get_null_D_fp(lseg, rxyz, rcov, amp):
-    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
+    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp, D_n)
     null_D_fp = null_space(D_fp_mat)
     return null_D_fp
 
@@ -918,90 +936,15 @@ def get_fpCG(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
     res_CG = get_CG_norm_fp(lseg, rxyz_sphere, rcov_sphere, amp)
     
     return res_CG
-
-
-
-
 '''
-Self-contained implementation of non-linear optimization algorithms:
-
-- steepest descent
-- newton's method
-- conjuage gradient
-- BFGS
-- l-BFGS
-
-By Yiren Lu, Jun 2017
-https://github.com/yrlu/non-convex
-
-Reference:
-https://github.com/tamland/non-linear-optimization
-https://www.cs.utexas.edu/~huangqx/2017_CS395T_Numerical_Optimization_Lecture_5.pdf
-
-# line-search conditions
-def wolfe(f, g, xk, alpha, pk):
-    c1 = 1e-4
-    return f(xk + alpha * pk) <= f(xk) + c1 * alpha * np.dot(g(xk), pk)
 
 
-def strong_wolfe(f, g, xk, alpha, pk, c2):
-    # typically, c2 = 0.9 when using Newton or quasi-Newton's method.
-    #            c2 = 0.1 when using non-linear conjugate gradient method.
-    return wolfe(f, g, xk, alpha, pk) and abs( \
-        np.dot(g(xk + alpha * pk), pk)) <= c2 * abs(np.dot(g(xk), pk))
+#################################################################################
+# Self-contained implementation of non-linear optimization algorithms:
+# https://github.com/yrlu/non-convex
+# https://github.com/tamland/non-linear-optimization
+#################################################################################
 
-
-def gold_stein(f, g, xk, alpha, pk, c):
-    return (f(xk) + (1 - c) * alpha * np.dot(g(xk), pk) <= f(xk + alpha * pk) \
-           ) and (f(xk + alpha * pk) <= f(xk) + c * alpha * np.dot(g(xk), pk))
-
-
-# line-search step len
-def step_length(f, g, xk, alpha, pk, c2):
-    return interpolation(f, g,                                                 \
-                         lambda alpha: f(xk + alpha * pk),                     \
-                         lambda alpha: np.dot(g(xk + alpha * pk), pk),         \
-                         alpha, c2,                                            \
-                         lambda f, g, alpha, c2: strong_wolfe(f, g, xk, alpha, pk, c2))
-
-
-def interpolation(f, g, f_alpha, g_alpha, alpha, c2, strong_wolfe_alpha, iters=20):
-    # referred implementation here:
-    # https://github.com/tamland/non-linear-optimization
-    l = 0.0
-    h = 1.0
-    for i in xrange(iters):
-        if strong_wolfe_alpha(f, g, alpha, c2):
-            return alpha
-
-    half = (l + h) / 2
-    alpha = - g_alpha(l) * (h**2) / (2 * (f_alpha(h) - f_alpha(l) - g_alpha(l) * h))
-    if alpha < l or alpha > h:
-        alpha = half
-    if g_alpha(alpha) > 0:
-        h = alpha
-    elif g_alpha(alpha) <= 0:
-        l = alpha
-    return alpha
-
-
-# optimization algorithms
-def steepest_descent(f, grad, x0, iterations, error):
-    x = x0
-    x_old = x
-    c2 = 0.9
-    for i in xrange(iterations):
-        pk = -np.gradient(x)
-        alpha = step_length(f, grad, x, 1.0, pk, c2)
-        x = x + alpha * pk
-        if i % 10 == 0:
-            # print "  iter={}, grad={}, alpha={}, x={}, f(x)={}".format(i, pk, alpha, x, f(x))
-            print "  iter={}, x={}, f(x)={}".format(i, x, f(x))
-        if np.linalg.norm(x - x_old) < error:
-            break
-        x_old = x
-    return x, i
-'''
 
 
 # @numba.jit()
