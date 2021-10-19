@@ -774,25 +774,37 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
 
 
 # @numba.jit()
-def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
+def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n):
+    if lmax == 0:
+        lseg = 1
+        l = 1
+    else:
+        lseg = 4
+        l = 2
+    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
-    # lamda_om = np.real(lamda_om)
+    lamda_om = np.real(lamda_om)
+    
+    # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
+    lamda_Varr_om = np.vstack((lamda_om, Varr_om))
+    sorted_lamda_Varr_om = lamda_Varr_om [ :, lamda_Varr_om[0].argsort()]
+    
     N_vec = len(Varr_om[0])
-    # D_fp = np.zeros(N_vec)
     D_fp = np.zeros((N_vec, 1))
     if x == 0:
-        Dx_om = get_Dx_gom(lseg, rxyz, rcov, amp, D_n)
+        Dx_om = get_Dx_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for i in range(N_vec):
             Dx_mul_V_om = np.matmul(Dx_om, Varr_om[:, i])
             D_fp[i][0] = np.matmul(Varr_om[:, i].T, Dx_mul_V_om)
     elif x == 1:
-        Dy_om = get_Dy_gom(lseg, rxyz, rcov, amp, D_n)
+        Dy_om = get_Dy_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for j in range(N_vec):
             Dy_mul_V_om = np.matmul(Dy_om, Varr_om[:, j])
             D_fp[j][0] = np.matmul(Varr_om[:, j].T, Dy_mul_V_om)
     elif x == 2:
-        Dz_om = get_Dz_gom(lseg, rxyz, rcov, amp, D_n)
+        Dz_om = get_Dz_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for k in range(N_vec):
             Dz_mul_V_om = np.matmul(Dz_om, Varr_om[:, k])
             D_fp[k][0] = np.matmul(Varr_om[:, k].T, Dz_mul_V_om)
@@ -804,7 +816,15 @@ def get_D_fp(lseg, rxyz, rcov, amp, x, D_n):
 
 
 # @numba.jit()
-def get_D_fp_mat(lseg, rxyz, rcov, amp, D_n):
+def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n):
+    if lmax == 0:
+        lseg = 1
+        l = 1
+    else:
+        lseg = 4
+        l = 2
+    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
     # om = get_gom(lseg, rxyz, rcov, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
@@ -812,7 +832,7 @@ def get_D_fp_mat(lseg, rxyz, rcov, amp, D_n):
     nat = len(rxyz)
     D_fp_mat = np.zeros((N, 3*nat))
     for iat in range(3*nat):
-        D_n = iat
+        D_n = iat // 3
         x = iat % 3
         D_fp = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
         D_fp_mat[:, D_n] = D_fp
@@ -959,13 +979,16 @@ def get_fp_nonperiodic(rxyz, znucls):
     fp = np.array(fp, float)
     return fp
 
+
+
 # @numba.jit()
 def get_fpdist_nonperiodic(fp1, fp2):
     d = fp1 - fp2
     return np.sqrt(np.vdot(d, d))
 
+
 # @numba.jit()
-def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
+def get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
     if lmax == 0:
         lseg = 1
         l = 1
@@ -978,10 +1001,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
     fc = 1.0 / (2.0 * NC * wc**2)
     nat = len(rxyz)
     cutoff2 = cutoff**2 
-    
     n_sphere_list = []
-    lfp = []
-    sfp = []
     for iat in range(nat):
         rxyz_sphere = []
         rcov_sphere = []
@@ -1020,35 +1040,50 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
         n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
-        # full overlap matrix
-        nid = lseg * n_sphere
-        gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-        val, vec = np.linalg.eig(gom)
-        val = np.real(val)
-        fp0 = np.zeros(nx*lseg)
-        for i in range(len(val)):
-            fp0[i] = val[i]
-        lfp.append(sorted(fp0))
-        pvec = np.real(np.transpose(vec)[0])
-        # contracted overlap matrix
-        if contract:
-            nids = l * (ntyp + 1)
-            omx = np.zeros((nids, nids))
-            for i in range(nid):
-                for j in range(nid):
-                    # print ind[i], ind[j]
-                    omx[ind[i]][ind[j]] = omx[ind[i]][ind[j]] + pvec[i] * gom[i][j] * pvec[j]
-            # for i in range(nids):
-            #     for j in range(nids):
-            #         if abs(omx[i][j] - omx[j][i]) > 1e-6:
-            #             print ("ERROR", i, j, omx[i][j], omx[j][i])
-            # print omx
-            sfp0 = np.linalg.eigvals(omx)
-            sfp.append(sorted(sfp0))
+    return amp, n_sphere, rxyz_sphere, rcov_sphere
 
 
-    print ("n_sphere_min", min(n_sphere_list))
-    print ("n_shpere_max", max(n_sphere_list)) 
+
+# @numba.jit()
+def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
+    if lmax == 0:
+        lseg = 1
+        l = 1
+    else:
+        lseg = 4
+        l = 2
+    lfp = []
+    sfp = []
+    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
+    # full overlap matrix
+    nid = lseg * n_sphere
+    gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    val, vec = np.linalg.eig(gom)
+    val = np.real(val)
+    fp0 = np.zeros(nx*lseg)
+    for i in range(len(val)):
+        fp0[i] = val[i]
+    lfp.append(sorted(fp0))
+    pvec = np.real(np.transpose(vec)[0])
+    # contracted overlap matrix
+    if contract:
+        nids = l * (ntyp + 1)
+        omx = np.zeros((nids, nids))
+        for i in range(nid):
+            for j in range(nid):
+                # print ind[i], ind[j]
+                omx[ind[i]][ind[j]] = omx[ind[i]][ind[j]] + pvec[i] * gom[i][j] * pvec[j]
+        # for i in range(nids):
+        #     for j in range(nids):
+        #         if abs(omx[i][j] - omx[j][i]) > 1e-6:
+        #             print ("ERROR", i, j, omx[i][j], omx[j][i])
+        # print omx
+        sfp0 = np.linalg.eigvals(omx)
+        sfp.append(sorted(sfp0))
+
+    # print ("n_sphere_min", min(n_sphere_list))
+    # print ("n_shpere_max", max(n_sphere_list)) 
 
     if contract:
         sfp = np.array(sfp, float)
