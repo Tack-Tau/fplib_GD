@@ -782,7 +782,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n):
         lseg = 4
         l = 2
     amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
+                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
     om = get_gom(lseg, rxyz, rcov, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     lamda_om = np.real(lamda_om)
@@ -824,7 +824,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n)
         lseg = 4
         l = 2
     amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
+                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
     # om = get_gom(lseg, rxyz, rcov, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
@@ -834,7 +834,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n)
     for iat in range(3*nat):
         D_n = iat // 3
         x = iat % 3
-        D_fp = get_D_fp(lseg, rxyz, rcov, amp, x, D_n)
+        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n)
         D_fp_mat[:, D_n] = D_fp
         # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
@@ -988,7 +988,7 @@ def get_fpdist_nonperiodic(fp1, fp2):
 
 
 # @numba.jit()
-def get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
+def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
     if lmax == 0:
         lseg = 1
         l = 1
@@ -1055,7 +1055,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
     lfp = []
     sfp = []
     amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
+                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff)
     # full overlap matrix
     nid = lseg * n_sphere
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
@@ -1096,9 +1096,9 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
 def get_ixyz(lat, cutoff):
     lat2 = np.matmul(lat, np.transpose(lat))
     # print lat2
-    vec = np.linalg.eigvals(lat2)
+    val = np.linalg.eigvals(lat2)
     # print (vec)
-    ixyz = int(np.sqrt(1.0/max(vec))*cutoff) + 1
+    ixyz = int(np.sqrt(1.0/max(val))*cutoff) + 1
     return ixyz
 
 # @numba.jit()
