@@ -836,9 +836,12 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n,
         D_n = iat // 3
         x = iat % 3
         D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
-        D_fp_mat[:, D_n] = D_fp
+        for j in range(len(D_fp)):
+            D_fp_mat[j][D_n] = D_fp[j][0]
+        # D_fp_mat[:, D_n] = D_fp
         # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
+
 
 
 # Previous CG process
@@ -1043,6 +1046,10 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
         n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
+    # for n_iter in range(nx-n_sphere+1):
+        # rxyz_sphere.append([0.0, 0.0, 0.0])
+        # rxyz_sphere.append([0.0, 0.0, 0.0])
+    # rxyz_sphere = np.array(rxyz_sphere, float)
     return amp, n_sphere, rxyz_sphere, rcov_sphere
 
 
@@ -1067,7 +1074,8 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     fp0 = np.zeros(nx*lseg)
     for i in range(len(val)):
         fp0[i] = val[i]
-    lfp.append(sorted(fp0))
+    lfp = sorted(fp0)
+    # lfp.append(sorted(fp0))
     pvec = np.real(np.transpose(vec)[0])
     # contracted overlap matrix
     if contract:
@@ -1129,6 +1137,16 @@ def readvasp(vp):
 
 # @numba.jit()
 def get_fpdist(ntyp, types, fp1, fp2):
+    lenfp = np.shape(fp1)
+    # nat, lenfp = np.shape(fp1)
+    # fpd = 0.0
+    # tfpd = fp1 - fp2
+    fpd = np.sqrt( np.dot(fp1 - fp2) )
+    return fpd
+
+'''
+# @numba.jit()
+def get_fpdist(ntyp, types, fp1, fp2):
     nat, lenfp = np.shape(fp1)
     fpd = 0.0
     for ityp in range(ntyp):
@@ -1148,4 +1166,6 @@ def get_fpdist(ntyp, types, fp1, fp2):
 
     fpd = fpd / nat
     return fpd
+'''
+
 
