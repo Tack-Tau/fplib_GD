@@ -84,7 +84,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                 # Derivative of <s_i | s_j>
-                Dx_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dx_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
                 # if D_n == iat:
                 #     Dx_om[iat][jat] = -(2.0*r) * d[0] * sji * amp[iat] * amp[jat]
@@ -103,7 +103,7 @@ def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
                 # Derivative of <s_i | s_j>
-                Dx_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dx_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
                 # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 # D_n != 4*jat+2 and D_n != 4*jat:
@@ -318,7 +318,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                 # Derivative of <s_i | s_j>
-                Dy_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dy_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
                 # if D_n == iat:
                 #     Dy_om[iat][jat] = -(2.0*r) * d[1] * sji * amp[iat] * amp[jat]
@@ -337,7 +337,7 @@ def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
                 # Derivative of <s_i | s_j>
-                Dy_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dy_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
                 # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 # D_n != 4*jat+2 and D_n != 4*jat:
@@ -552,7 +552,7 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                 # Derivative of <s_i | s_j>
-                Dz_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dz_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
                 # if D_n == iat:
                 #     Dz_om[iat][jat] = -(2.0*r) * d[2] * sji * amp[iat] * amp[jat]
@@ -571,7 +571,7 @@ def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
                 # Derivative of <s_i | s_j>
-                Dz_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \ 
+                Dz_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
                 # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
                 # D_n != 4*jat+2 and D_n != 4*jat:
@@ -798,17 +798,17 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
         Dx_om = get_Dx_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for i in range(N_vec):
             Dx_mul_V_om = np.matmul(Dx_om, sorted_Varr_om[:, i])
-            D_fp[i][0] = np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om)
+            D_fp[i][0] = np.real( np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om) )
     elif x == 1:
         Dy_om = get_Dy_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for j in range(N_vec):
             Dy_mul_V_om = np.matmul(Dy_om, sorted_Varr_om[:, j])
-            D_fp[j][0] = np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om)
+            D_fp[j][0] = np.real( np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om) )
     elif x == 2:
         Dz_om = get_Dz_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for k in range(N_vec):
             Dz_mul_V_om = np.matmul(Dz_om, sorted_Varr_om[:, k])
-            D_fp[k][0] = np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om)
+            D_fp[k][0] = np.real( np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om) )
     else:
         print("Error: Wrong x value! x can only be 0,1,2")
     

@@ -17,7 +17,7 @@ def test_CG(v1):
     step_size = 1e-4
     for x in range(3):
         for iat in range(len(rxyz)):
-        del_fp = np.zeros(3)
+            del_fp = np.zeros(3)
             for jat in range(len(rxyz)):
                 D_n_i = x*iat
                 D_n_j = x*jat
