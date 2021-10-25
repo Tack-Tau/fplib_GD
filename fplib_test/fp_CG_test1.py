@@ -17,20 +17,27 @@ def test_CG(v1):
     step_size = 1e-4
     for x in range(3):
         for iat in range(len(rxyz)):
-        del_fp = 0.0
+        del_fp = np.zeros(3)
             for jat in range(len(rxyz)):
+                D_n_i = x*iat
+                D_n_j = x*jat
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
                 fp_jat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
                 D_fp_mat_iat = \
-           fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n, iat)
+         fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n_i, iat)
                 D_fp_mat_jat = \
-           fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n, jat)
+         fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n_j, jat)
                 diff_fp = fp_iat-fp_jat
-                diff_D_fp = D_fp_mat_iat[:, iat-1] - D_fp_mat_jat[:, jat-1]
-                del_fp = del_fp + np.dot( diff_fp,  diff_D_fp )
-        rxyz[iat] = rxyz[iat] - step_size*del_fp
+                diff_D_fp = D_fp_mat_iat[:, D_n_i] - D_fp_mat_jat[:, D_n_j]
+                if np.dot( diff_fp,  diff_D_fp ) > atol:
+                    continue
+                del_fp[x] = del_fp[x] + np.dot( diff_fp,  diff_D_fp )
+        rxyz[iat][x] = rxyz[iat][x] - step_size*del_fp[x]
+    
+    return rxyz
+        
     
 
 if __name__ == "__main__":
