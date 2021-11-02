@@ -19,6 +19,14 @@ def test_CG(v1):
         for iat in range(len(rxyz)):
             del_fp = np.zeros(3)
             for jat in range(len(rxyz)):
+                # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                # fplib_GD.get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+                # print ("amp", amp)
+                # print ("n_sphere", n_sphere)
+                # print ("rxyz_sphere", rxyz_sphere)
+                # print ("rcov_sphere", rcov_sphere)
+                # print ("iat = ", iat)
+                # print ("jat = ", jat)
                 D_n_i = x*iat
                 D_n_j = x*jat
                 fp_iat = \
@@ -31,12 +39,22 @@ def test_CG(v1):
          fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n_j, jat)
                 diff_fp = fp_iat-fp_jat
                 diff_D_fp = D_fp_mat_iat[:, D_n_i] - D_fp_mat_jat[:, D_n_j]
-                if np.dot( diff_fp,  diff_D_fp ) > atol:
-                    continue
                 del_fp[x] = del_fp[x] + np.dot( diff_fp,  diff_D_fp )
+                if np.dot( diff_fp,  diff_D_fp ) > atol:
+                    print("rxyz_final = ", rxyz)
+                    sys.exit("Reached user setting tolerance, program ended")
+            print ("1 rxyz", rxyz)
+        print ("2 rxyz", rxyz)
         rxyz[iat][x] = rxyz[iat][x] - step_size*del_fp[x]
-    
+        print ("3 rxyz", rxyz)
+        
+    # print ("n_sphere", n_sphere)
+    # print ("length of amp", len(amp))
+    # print ("length of rcov_sphere", len(rcov_sphere))
+    # print ("size of rxyz_sphere", rxyz_sphere.shape)
+    print ("final rxyz", rxyz)
     return rxyz
+    
         
     
 

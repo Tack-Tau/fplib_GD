@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 from scipy.optimize import linear_sum_assignment, minimize
 from scipy.linalg import null_space
 import rcovdata
@@ -824,8 +825,8 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n,
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
@@ -1006,15 +1007,25 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     nat = len(rxyz)
     cutoff2 = cutoff**2 
     n_sphere_list = []
-    if iat > nat:
-        print("Error: iat cannot be larger than total number atoms in unit cell")
-    else:
-        rxyz_sphere = []
-        rcov_sphere = []
-        ind = [0] * (lseg * nx)
-        amp = []
+    rxyz_sphere = []
+    rcov_sphere = []
+    ind = [0] * (lseg * nx)
+    amp = []
+    n_sphere = 0
+    xi, yi, zi = [0.0, 0.0, 0.0]
+    # print ("init iat = ", iat)
+    # if iat >= nat:
+        # print ("max iat = ", iat)
+        # sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
+    # else:
+        # print ("else iat = ", iat)
+    if iat < nat:
+        # rxyz_sphere = []
+        # rcov_sphere = []
+        # ind = [0] * (lseg * nx)
+        # amp = []
         xi, yi, zi = rxyz[iat]
-        n_sphere = 0
+        # n_sphere = 0
         for jat in range(nat):
             for ix in range(-ixyz, ixyz+1):
                 for iy in range(-ixyz, ixyz+1):
@@ -1050,6 +1061,10 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         # rxyz_sphere.append([0.0, 0.0, 0.0])
         # rxyz_sphere.append([0.0, 0.0, 0.0])
     # rxyz_sphere = np.array(rxyz_sphere, float)
+    # print ("amp", amp)
+    # print ("n_sphere", n_sphere)
+    # print ("rxyz_sphere", rxyz_sphere)
+    # print ("rcov_sphere", rcov_sphere)
     return amp, n_sphere, rxyz_sphere, rcov_sphere
 
 
