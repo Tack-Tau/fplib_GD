@@ -1015,12 +1015,13 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     n_sphere = 0
     xi, yi, zi = [0.0, 0.0, 0.0]
     print ("init iat = ", iat)
-    # if iat >= nat:
-        # print ("max iat = ", iat)
+    if iat >= (nat-1):
+        print ("max iat = ", iat)
         # sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
-    # else:
-        # print ("else iat = ", iat)
-    if iat < nat:
+        return amp, n_sphere, rxyz_sphere, rcov_sphere
+    else:
+        print ("else iat = ", iat)
+    # if iat < nat:
         # rxyz_sphere = []
         # rcov_sphere = []
         # ind = [0] * (lseg * nx)
