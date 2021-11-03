@@ -791,6 +791,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
     lamda_Varr_om = np.vstack((lamda_om, Varr_om))
     sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()]
+    print("size of sorted_lamda_Varr_om =", sorted_lamda_Varr_om.shape)
     sorted_Varr_om = sorted_lamda_Varr_om[1:, :]
     
     N_vec = len(sorted_Varr_om[0])
@@ -1013,7 +1014,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     amp = []
     n_sphere = 0
     xi, yi, zi = [0.0, 0.0, 0.0]
-    # print ("init iat = ", iat)
+    print ("init iat = ", iat)
     # if iat >= nat:
         # print ("max iat = ", iat)
         # sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")

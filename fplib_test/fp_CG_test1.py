@@ -25,8 +25,8 @@ def test_CG(v1):
                 # print ("n_sphere", n_sphere)
                 # print ("rxyz_sphere", rxyz_sphere)
                 # print ("rcov_sphere", rcov_sphere)
-                # print ("iat = ", iat)
-                # print ("jat = ", jat)
+                print ("iat = ", iat)
+                print ("jat = ", jat)
                 D_n_i = x*iat
                 D_n_j = x*jat
                 fp_iat = \
