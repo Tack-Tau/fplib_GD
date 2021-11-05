@@ -791,7 +791,6 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
     lamda_Varr_om = np.vstack((lamda_om, Varr_om))
     sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()]
-    print("size of sorted_lamda_Varr_om =", sorted_lamda_Varr_om.shape)
     sorted_Varr_om = sorted_lamda_Varr_om[1:, :]
     
     N_vec = len(sorted_Varr_om[0])
@@ -819,29 +818,29 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
 
 
 # @numba.jit()
-def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, D_n, iat):
+def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat):
     if lmax == 0:
         lseg = 1
         l = 1
     else:
         lseg = 4
         l = 2
-    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
-    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                  get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
-    nat = len(rxyz)
-    D_fp_mat = np.zeros((nx*lseg, 3*nat))
-    for iat in range(3*nat):
-        D_n = iat // 3
-        x = iat % 3
-        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
-        for j in range(len(D_fp)):
-            D_fp_mat[j][D_n] = D_fp[j][0]
-        # D_fp_mat[:, D_n] = D_fp
-        # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
+    nat = len(rxyz_sphere)
+    D_fp_mat = np.zeros((nx*lseg, nat))
+    # for iat in range(3*nat):
+    # D_n = iat // 3
+    # x = iat % 3
+    D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
+    for j in range(len(D_fp)):
+        D_fp_mat[j][D_n] = D_fp[j][0]
+    # D_fp_mat[:, D_n] = D_fp
+    # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
 
 
@@ -1008,26 +1007,20 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     nat = len(rxyz)
     cutoff2 = cutoff**2 
     n_sphere_list = []
-    rxyz_sphere = []
-    rcov_sphere = []
-    ind = [0] * (lseg * nx)
-    amp = []
-    n_sphere = 0
-    xi, yi, zi = [0.0, 0.0, 0.0]
-    print ("init iat = ", iat)
-    if iat >= (nat-1):
-        print ("max iat = ", iat)
+    # print ("init iat = ", iat)
+    # if iat > (nat-1):
+        # print ("max iat = ", iat)
         # sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
-        return amp, n_sphere, rxyz_sphere, rcov_sphere
-    else:
-        print ("else iat = ", iat)
-    # if iat < nat:
-        # rxyz_sphere = []
-        # rcov_sphere = []
-        # ind = [0] * (lseg * nx)
-        # amp = []
+        # return amp, n_sphere, rxyz_sphere, rcov_sphere
+    # else:
+        # print ("else iat = ", iat)
+    if iat <= (nat-1):
+        rxyz_sphere = []
+        rcov_sphere = []
+        ind = [0] * (lseg * nx)
+        amp = []
         xi, yi, zi = rxyz[iat]
-        # n_sphere = 0
+        n_sphere = 0
         for jat in range(nat):
             for ix in range(-ixyz, ixyz+1):
                 for iy in range(-ixyz, ixyz+1):
@@ -1157,8 +1150,8 @@ def get_fpdist(ntyp, types, fp1, fp2):
     lenfp = np.shape(fp1)
     # nat, lenfp = np.shape(fp1)
     # fpd = 0.0
-    # tfpd = fp1 - fp2
-    fpd = np.sqrt( np.dot(fp1 - fp2) )
+    tfpd = fp1 - fp2
+    fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
     return fpd
 
 '''
