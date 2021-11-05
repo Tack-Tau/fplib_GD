@@ -4,3 +4,4 @@ metacell_VASP.f90
 non-convex.py
 __pycache__
 *.pyc
+*.vasp
