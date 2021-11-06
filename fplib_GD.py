@@ -794,22 +794,22 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     sorted_Varr_om = sorted_lamda_Varr_om[1:, :]
     
     N_vec = len(sorted_Varr_om[0])
-    D_fp = np.zeros((nx*lseg, 1))
+    D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for i in range(N_vec):
             Dx_mul_V_om = np.matmul(Dx_om, sorted_Varr_om[:, i])
-            D_fp[i][0] = np.real( np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om) )
+            D_fp[i][0] = np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om)
     elif x == 1:
         Dy_om = get_Dy_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for j in range(N_vec):
             Dy_mul_V_om = np.matmul(Dy_om, sorted_Varr_om[:, j])
-            D_fp[j][0] = np.real( np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om) )
+            D_fp[j][0] = np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om)
     elif x == 2:
         Dz_om = get_Dz_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for k in range(N_vec):
             Dz_mul_V_om = np.matmul(Dz_om, sorted_Varr_om[:, k])
-            D_fp[k][0] = np.real( np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om) )
+            D_fp[k][0] = np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om)
     else:
         print("Error: Wrong x value! x can only be 0,1,2")
     
@@ -818,29 +818,29 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
 
 
 # @numba.jit()
-def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat):
+def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     if lmax == 0:
         lseg = 1
         l = 1
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                  get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
-    nat = len(rxyz_sphere)
-    D_fp_mat = np.zeros((nx*lseg, nat))
-    # for iat in range(3*nat):
-    # D_n = iat // 3
-    # x = iat % 3
-    D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
-    for j in range(len(D_fp)):
-        D_fp_mat[j][D_n] = D_fp[j][0]
-    # D_fp_mat[:, D_n] = D_fp
-    # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
+    nat = len(rxyz)
+    D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
+    for i in range(3*nat):
+        D_n = i // 3
+        x = i % 3
+        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
+        for j in range(len(D_fp)):
+            D_fp_mat[x][j][D_n] = D_fp[j][0]
+            # D_fp_mat[x, :, D_n] = D_fp
+            # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
 
 
