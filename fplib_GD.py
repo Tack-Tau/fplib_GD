@@ -825,13 +825,13 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     else:
         lseg = 4
         l = 2
-    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
-    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                  get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
-    nat = len(rxyz)
+    nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
     for i in range(3*nat):
         D_n = i // 3
@@ -843,6 +843,28 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     return  D_fp_mat
 
+
+def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
+    amp_1, n_sphere_1, rxyz_sphere_1, rcov_sphere_1 = \
+                get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    amp_2, n_sphere_2, rxyz_sphere_2, rcov_sphere_2 = \
+                get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
+    nat_1 = len(rxyz_sphere_1)
+    nat_2 = len(rxyz_sphere_2)
+    rxyz_sphere_1 = rxyz_sphere_1.tolist()
+    rxyz_sphere_2 = rxyz_sphere_2.tolist()
+    i_rxyz_sphere_1 = []
+    i_rxyz_sphere_2 = []
+    common_count = 0
+    for i in range(nat_1):
+        for j in range(nat_2):
+            if rxyz_sphere_1[i] == rxyz_sphere_2[j]:
+                common_count = common_count + 1
+                i_rxyz_sphere_1.append(i)
+                i_rxyz_sphere_2.append(j)
+    print("{0:d} common atoms for {1:d}th atom and {2:d}th atom".format(common_count, iat+1, jat+1))
+    return i_rxyz_sphere_1, i_rxyz_sphere_2
+    
 
 
 # Previous CG process

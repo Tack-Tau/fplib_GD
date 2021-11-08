@@ -18,8 +18,9 @@ def test1_CG(v1):
     step_size = 1e-4
     
     for i_iter in range(iter_max+1):
+        del_fp = np.zeros(3)
         for i_atom in range(len(rxyz)):
-            del_fp = np.zeros(3)
+            # del_fp = np.zeros(3)
             for j_atom in range(len(rxyz)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
@@ -34,14 +35,26 @@ def test1_CG(v1):
                 fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
                                           rxyz, types, znucl, cutoff, j_atom)
                 diff_fp = fp_iat-fp_jat
-                diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
-                diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
-                diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
-                del_fp[0] = del_fp[0] + np.dot( diff_fp,  diff_D_fp_x )
-                del_fp[1] = del_fp[1] + np.dot( diff_fp,  diff_D_fp_y )
-                del_fp[2] = del_fp[2] + np.dot( diff_fp,  diff_D_fp_z )
+                i_rxyz_sphere_1, i_rxyz_sphere_2 = \
+                fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
+                                                znucl, cutoff, i_atom, j_atom)
+                if i_atom in i_rxyz_sphere_1 and j_atom in i_rxyz_sphere_2:
+                    diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
+                    diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
+                    diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
+                else:
+                    diff_D_fp_x = np.zeros_like(diff_fp)
+                    diff_D_fp_y = np.zeros_like(diff_fp)
+                    diff_D_fp_z = np.zeros_like(diff_fp)
+                # diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
+                # diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
+                # diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
+                del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
+                del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
+                del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
+                print("del_fp = ", del_fp)
                 rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
-                if min(del_fp) < atol:
+                if max(del_fp) < atol:
                     print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                           format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
                     # with np.printoptions(precision=3, suppress=True):
