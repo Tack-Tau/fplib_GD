@@ -28,30 +28,40 @@ def test1_CG(v1):
                 fp_jat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
                                           rxyz, types, znucl, cutoff, j_atom)
-                D_fp_mat = \
+                D_fp_mat_iat = \
                 fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
                                           rxyz, types, znucl, cutoff, i_atom)
                 D_fp_mat_jat = \
                 fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
                                           rxyz, types, znucl, cutoff, j_atom)
                 diff_fp = fp_iat-fp_jat
-                i_rxyz_sphere_1, i_rxyz_sphere_2 = \
+                common_count, i_rxyz_sphere_1, i_rxyz_sphere_2 = \
                 fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
                                                 znucl, cutoff, i_atom, j_atom)
-                if i_atom in i_rxyz_sphere_1 and j_atom in i_rxyz_sphere_2:
-                    diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
-                    diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
-                    diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
-                else:
-                    diff_D_fp_x = np.zeros_like(diff_fp)
-                    diff_D_fp_y = np.zeros_like(diff_fp)
-                    diff_D_fp_z = np.zeros_like(diff_fp)
+                for i_common in range(common_count):
+                    diff_D_fp_x = D_fp_mat_iat[0, :, i_rxyz_sphere_1[i_common]] - \
+                                  D_fp_mat_jat[0, :, i_rxyz_sphere_2[i_common]]
+                    diff_D_fp_y = D_fp_mat_iat[1, :, i_rxyz_sphere_1[i_common]] - \
+                                  D_fp_mat_jat[1, :, i_rxyz_sphere_2[i_common]]
+                    diff_D_fp_z = D_fp_mat_iat[2, :, i_rxyz_sphere_1[i_common]] - \
+                                  D_fp_mat_jat[2, :, i_rxyz_sphere_2[i_common]]
+                    del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
+                    del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
+                    del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
+                # if i_atom in i_rxyz_sphere_1 and j_atom in i_rxyz_sphere_2:
+                #     diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
+                #     diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
+                #     diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
+                # else:
+                #     diff_D_fp_x = np.zeros_like(diff_fp)
+                #     diff_D_fp_y = np.zeros_like(diff_fp)
+                #     diff_D_fp_z = np.zeros_like(diff_fp)
                 # diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
                 # diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
                 # diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
-                del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
-                del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
-                del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
+                # del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
+                # del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
+                # del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
                 print("del_fp = ", del_fp)
                 rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
                 if max(del_fp) < atol:

@@ -814,6 +814,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
         print("Error: Wrong x value! x can only be 0,1,2")
     
     # D_fp = np.real(D_fp)
+    # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
     return D_fp
 
 
@@ -841,7 +842,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
             D_fp_mat[x][j][D_n] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
-    return  D_fp_mat
+    return D_fp_mat
 
 
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
@@ -862,8 +863,8 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
                 common_count = common_count + 1
                 i_rxyz_sphere_1.append(i)
                 i_rxyz_sphere_2.append(j)
-    print("{0:d} common atoms for {1:d}th atom and {2:d}th atom".format(common_count, iat+1, jat+1))
-    return i_rxyz_sphere_1, i_rxyz_sphere_2
+    # print("{0:d} common atoms for {1:d}th atom and {2:d}th atom".format(common_count, iat+1, jat+1))
+    return common_count, i_rxyz_sphere_1, i_rxyz_sphere_2
     
 
 
