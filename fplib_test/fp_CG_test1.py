@@ -179,4 +179,4 @@ if __name__ == "__main__":
     args = sys.argv
     v1 = args[1]
     test1_CG(v1)
-    print( test2_CG(v1) )
+    print ("Finger print energy = {0:6.f}".format(test2_CG(v1)))
