@@ -842,6 +842,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
             D_fp_mat[x][j][D_n] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
+    # print("D_fp_mat = \n{0:s}".format(np.array_str(D_fp_mat, precision=6, suppress_small=False)) )
     return D_fp_mat
 
 
@@ -1185,8 +1186,24 @@ def readvasp(vp):
         types += [i+1]*typt[i]
     types = np.array(types, int)
     rxyz = np.dot(pos, lat)
-    #rxyz = pos
+    # rxyz = pos
     return lat, rxyz, types
+
+
+
+# @numba.jit()
+def get_rxyz_delta(rxyz):
+    nat = len(rxyz)
+    rxyz_delta = np.random.randn(nat, 3)
+    for iat in range(nat):
+        r_norm = np.linalg.norm(rxyz_delta[iat])
+        rxyz_delta[iat] = np.divide(rxyz_delta[iat], r_norm)
+    # rxyz_plus = np.add(rxyz, rxyz_delta)
+    # rxyz_minus = np.subtract(rxyz, rxyz_delta)
+        
+    return rxyz_delta
+
+
 
 # @numba.jit()
 def get_fpdist(ntyp, types, fp1, fp2):
@@ -1194,7 +1211,8 @@ def get_fpdist(ntyp, types, fp1, fp2):
     # nat, lenfp = np.shape(fp1)
     # fpd = 0.0
     tfpd = fp1 - fp2
-    fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
+    # fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
+    fpd = np.dot(tfpd, tfpd)
     return fpd
 
 '''
