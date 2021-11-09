@@ -826,13 +826,13 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                  get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
-    nat = len(rxyz_sphere)
+    nat = len(rxyz)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
     for i in range(3*nat):
         D_n = i // 3
@@ -845,6 +845,25 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     return D_fp_mat
 
 
+
+def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
+    amp_j, n_sphere_j, rxyz_sphere_j, rcov_sphere_j = \
+                get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
+    i_sphere_count = 0
+    nat_j_sphere = len(rxyz_sphere_j)
+    iat_in_j_sphere = False
+    rxyz = rxyz.tolist()
+    rxyz_sphere_j = rxyz_sphere_j.tolist()
+    for j in range(nat_j_sphere):
+        if rxyz[iat] == rxyz_sphere_j[j]:
+            iat_in_j_sphere = True
+            return iat_in_j_sphere, j
+        else:
+            return iat_in_j_sphere, j
+
+
+
+'''
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
     amp_1, n_sphere_1, rxyz_sphere_1, rcov_sphere_1 = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
@@ -865,7 +884,8 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
                 i_rxyz_sphere_2.append(j)
     # print("{0:d} common atoms for {1:d}th atom and {2:d}th atom".format(common_count, iat+1, jat+1))
     return common_count, i_rxyz_sphere_1, i_rxyz_sphere_2
-    
+'''    
+
 
 
 # Previous CG process
