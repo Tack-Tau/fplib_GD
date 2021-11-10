@@ -1194,7 +1194,7 @@ def readvasp(vp):
 # @numba.jit()
 def get_rxyz_delta(rxyz):
     nat = len(rxyz)
-    rxyz_delta = np.random.randn(nat, 3)
+    rxyz_delta = np.random.rand(nat, 3)
     for iat in range(nat):
         r_norm = np.linalg.norm(rxyz_delta[iat])
         rxyz_delta[iat] = np.divide(rxyz_delta[iat], r_norm)
@@ -1212,7 +1212,7 @@ def get_fpdist(ntyp, types, fp1, fp2):
     # fpd = 0.0
     tfpd = fp1 - fp2
     # fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
-    fpd = np.dot(tfpd, tfpd)
+    fpd = np.dot(tfpd, tfpd)/lenfp
     return fpd
 
 '''

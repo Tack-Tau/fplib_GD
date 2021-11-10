@@ -186,34 +186,36 @@ def test3_CG(v1):
     lat, rxyz, types = fplib_GD.readvasp(v1)
     contract = False
     i_iter = 0
-    iter_max = 100
+    iter_max = 5
     atol = 1e-6
-    step_size = 1e+20
+    step_size = 1e-4
+    const_factor = 1e+27
     del_fp_dist = 0.0
+    rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
         rxyz_delta = fplib_GD.get_rxyz_delta(rxyz)
-        rxyz = np.add(rxyz, rxyz_delta)
+        rxyz_new = np.add(rxyz_new, rxyz_delta)
         for i_atom in range(len(rxyz)):
             del_fp = np.zeros(3)
             for j_atom in range(len(rxyz)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, i_atom)
+                                          rxyz_new, types, znucl, cutoff, i_atom)
                 fp_jat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, j_atom)
+                                          rxyz_new, types, znucl, cutoff, j_atom)
                 D_fp_mat_iat = \
                 fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, i_atom)
+                                          rxyz_new, types, znucl, cutoff, i_atom)
                 D_fp_mat_jat = \
                 fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, j_atom)
+                                          rxyz_new, types, znucl, cutoff, j_atom)
                 diff_fp = fp_iat-fp_jat
                 # common_count, i_rxyz_sphere_1, i_rxyz_sphere_2 = \
                 # fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
                 #                                 znucl, cutoff, i_atom, j_atom)
                 iat_in_j_sphere, iat_j = fplib_GD.get_common_sphere(ntyp, \
-                              nx, lmax, lat, rxyz, types, znucl, cutoff, i_atom, j_atom)
+                              nx, lmax, lat, rxyz_new, types, znucl, cutoff, i_atom, j_atom)
                 if iat_in_j_sphere:
                     diff_D_fp_x = D_fp_mat_iat[0, :, i_atom] - D_fp_mat_jat[0, :, iat_j]
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom] - D_fp_mat_jat[1, :, iat_j]
@@ -222,30 +224,30 @@ def test3_CG(v1):
                     diff_D_fp_x = D_fp_mat_iat[0, :, i_atom]
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
                     diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
-                del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
-                del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
-                del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
-            del_fp_dist = del_fp_dist + np.dot(rxyz_delta[i_atom], del_fp)
-            print ("i_iter = {0:d} del_fp_dist = {1:.6f}".format(i_iter, del_fp_dist))
+                del_fp[0] = del_fp[0] + const_factor*np.vdot( diff_D_fp_x, diff_fp )
+                del_fp[1] = del_fp[1] + const_factor*np.vdot( diff_D_fp_y, diff_fp )
+                del_fp[2] = del_fp[2] + const_factor*np.vdot( diff_D_fp_z, diff_fp )
+                del_fp_dist = del_fp_dist + np.dot(rxyz_delta[i_atom], del_fp)
+            print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
             # print("del_fp_dist = ", del_fp_dist)
     
     
     fp_dist = 0.0
     for ityp in range(ntyp):
         itype = ityp + 1
-        for iat in range(len(rxyz)):
+        for iat in range(len(rxyz_new)):
             if types[iat] == itype:
-                for jat in range(len(rxyz)):
+                for jat in range(len(rxyz_new)):
                     if types[jat] == itype:
                         fp_iat = \
                         fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, iat)
+                                          rxyz_new, types, znucl, cutoff, iat)
                         fp_jat = \
                         fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, jat)
+                                          rxyz_new, types, znucl, cutoff, jat)
                         fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
 
-    print("sum of del_fp_dist = ", del_fp_dist)
+    print("sum of del_fp_dist = {0:.6e}".format(del_fp_dist))
     print("fp_dist = ", fp_dist)
     # return fp_dist
     # return rxyz
