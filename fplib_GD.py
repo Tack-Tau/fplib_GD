@@ -815,6 +815,8 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     
     # D_fp = np.real(D_fp)
     # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
+    D_fp_factor = 1e+20
+    D_fp = (np.exp( np.log(D_fp_factor*D_fp + 10.0) ) - 10.0)/D_fp_factor
     return D_fp
 
 
@@ -843,6 +845,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     # print("D_fp_mat = \n{0:s}".format(np.array_str(D_fp_mat, precision=6, suppress_small=False)) )
+    # D_fp_mat = np.exp( np.log(D_fp_mat + 1.0) ) - 1.0
     return D_fp_mat
 
 
@@ -1194,7 +1197,7 @@ def readvasp(vp):
 # @numba.jit()
 def get_rxyz_delta(rxyz):
     nat = len(rxyz)
-    rxyz_delta = np.random.rand(nat, 3)
+    rxyz_delta = np.subtract( np.random.rand(nat, 3), 0.5*np.ones((nat, 3)) )
     for iat in range(nat):
         r_norm = np.linalg.norm(rxyz_delta[iat])
         rxyz_delta[iat] = np.divide(rxyz_delta[iat], r_norm)

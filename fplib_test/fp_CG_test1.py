@@ -1,7 +1,7 @@
 import numpy as np
 import fplib_GD
 import sys
-
+np.random.seed(42)
 # Move function `readvasp(vp)` from test set to `fplib_FD.py`
 
 
@@ -186,10 +186,10 @@ def test3_CG(v1):
     lat, rxyz, types = fplib_GD.readvasp(v1)
     contract = False
     i_iter = 0
-    iter_max = 5
-    atol = 1e-6
+    iter_max = 4
+    atol = 1.0e-6
     step_size = 1e-4
-    const_factor = 1e+27
+    const_factor = 1.0e+31
     del_fp_dist = 0.0
     rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
@@ -227,7 +227,7 @@ def test3_CG(v1):
                 del_fp[0] = del_fp[0] + const_factor*np.vdot( diff_D_fp_x, diff_fp )
                 del_fp[1] = del_fp[1] + const_factor*np.vdot( diff_D_fp_y, diff_fp )
                 del_fp[2] = del_fp[2] + const_factor*np.vdot( diff_D_fp_z, diff_fp )
-                del_fp_dist = del_fp_dist + np.dot(rxyz_delta[i_atom], del_fp)
+                del_fp_dist = del_fp_dist + np.absolute( np.dot(rxyz_delta[i_atom], del_fp) )
             print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
             # print("del_fp_dist = ", del_fp_dist)
     
