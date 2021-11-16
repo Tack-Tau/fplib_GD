@@ -20,11 +20,18 @@ def test1_CG(v1):
     step_size = 1e-4
     const_factor = 1.0e+38
     rxyz_new = rxyz.copy()
+    fp_dist = 0.0
+    fpdist_error = 0.0
+    fpdist_temp_sum = 0.0
+    fpdsit_temp_num = 0.0
     
     for i_iter in range(iter_max+1):
         # del_fp = np.zeros(3)
         for i_atom in range(len(rxyz_new)):
             del_fp = np.zeros(3)
+            temp_del_fp = np.zeros(3)
+            accum_error = np.zeros(3)
+            temp_sum = np.zeros(3)
             for j_atom in range(len(rxyz_new)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
@@ -52,11 +59,25 @@ def test1_CG(v1):
                     diff_D_fp_x = D_fp_mat_iat[0, :, i_atom]
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
                     diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
-                del_fp[0] = del_fp[0] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_x )
-                del_fp[1] = del_fp[1] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_y )
-                del_fp[2] = del_fp[2] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_z )
                 
+                # Kahan sum implementation
+                temp_del_fp[0] = accum_error[0] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_x )
+                temp_del_fp[1] = accum_error[1] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_y )
+                temp_del_fp[2] = accum_error[2] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_z )
+                temp_sum[0] = del_fp[0] + temp_del_fp[0]
+                temp_sum[1] = del_fp[1] + temp_del_fp[1]
+                temp_sum[2] = del_fp[2] + temp_del_fp[2]
+                accum_error[0] = temp_del_fp[0] - (temp_sum[0] - del_fp[0])
+                accum_error[1] = temp_del_fp[1] - (temp_sum[1] - del_fp[1])
+                accum_error[2] = temp_del_fp[2] - (temp_sum[2] - del_fp[2])
+                del_fp[0] = temp_sum[0]
+                del_fp[1] = temp_sum[1]
+                del_fp[2] = temp_sum[2]
                 
+                fpdist_temp_num = fpdist_error + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                fpdist_temp_sum = fp_dist + fpdist_temp_num
+                fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
+                fp_dist = fpdist_temp_sum
                 
                 '''
                 for i_common in range(common_count):
@@ -101,8 +122,11 @@ def test1_CG(v1):
                 '''
             
             rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp
+            
             print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                   format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)))
+            print ( "Finger print energy = {0:s}".format(np.array_str(fp_dist, \
+                                               precision=6, suppress_small=False)) )
     
     
     '''
@@ -160,19 +184,25 @@ def test2_CG(v1):
     lat, rxyz, types = fplib_GD.readvasp(v1)
     contract = False
     fp_dist = 0.0
+    fpdist_error = 0.0
+    temp_num = 0.0
+    temp_sum = 0.0
     for ityp in range(ntyp):
         itype = ityp + 1
-        for iat in range(len(rxyz)):
-            if types[iat] == itype:
-                for jat in range(len(rxyz)):
-                    if types[jat] == itype:
+        for i_atom in range(len(rxyz)):
+            if types[i_atom] == itype:
+                for j_atom in range(len(rxyz)):
+                    if types[j_atom] == itype:
                         fp_iat = \
                         fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, iat)
+                                          rxyz, types, znucl, cutoff, i_atom)
                         fp_jat = \
                         fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
-                                          rxyz, types, znucl, cutoff, jat)
-                        fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                                          rxyz, types, znucl, cutoff, j_atom)
+                        temp_num = fpdist_error + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                        temp_sum = fp_dist + temp_num
+                        accum_error = temp_num - (temp_sum - fp_dist)
+                        fp_dist = temp_sum
 
     
     print ( "Finger print energy = {0:s}".format(np.array_str(fp_dist, \
@@ -197,7 +227,7 @@ def test3_CG(v1):
     del_fp_dist = 0.0
     rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
-        rxyz_delta = fplib_GD.get_rxyz_delta(rxyz)
+        rxyz_delta = step_size*fplib_GD.get_rxyz_delta(rxyz)
         rxyz_new = np.add(rxyz_new, rxyz_delta)
         for i_atom in range(len(rxyz)):
             del_fp = np.zeros(3)
@@ -262,5 +292,5 @@ if __name__ == "__main__":
     args = sys.argv
     v1 = args[1]
     test1_CG(v1)
-    test2_CG(v1)
+    # test2_CG(v1)
     # test3_CG(v1)

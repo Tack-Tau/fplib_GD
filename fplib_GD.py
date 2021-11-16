@@ -815,8 +815,10 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     
     # D_fp = np.real(D_fp)
     # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
-    D_fp_factor = 1e+20
-    D_fp = (np.exp( np.log(D_fp_factor*D_fp + 10.0) ) - 10.0)/D_fp_factor
+    D_fp_factor = np.zeros(N_vec)
+    for N in range(N_vec):
+        D_fp_factor[N] = 1/D_fp[N][0]
+        D_fp[N][0] = (np.exp( np.log(D_fp_factor[N]*D_fp[N][0] + 1.2) ) - 1.2)/D_fp_factor[N]
     return D_fp
 
 
@@ -845,7 +847,6 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     # print("D_fp_mat = \n{0:s}".format(np.array_str(D_fp_mat, precision=6, suppress_small=False)) )
-    # D_fp_mat = np.exp( np.log(D_fp_mat + 1.0) ) - 1.0
     return D_fp_mat
 
 
