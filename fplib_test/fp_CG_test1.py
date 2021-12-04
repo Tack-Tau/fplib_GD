@@ -18,20 +18,20 @@ def test1_CG(v1):
     iter_max = 4
     atol = 1e-6
     step_size = 1e-4
-    const_factor = 1.0e+38
+    const_factor = 1.0e+31
     rxyz_new = rxyz.copy()
     fp_dist = 0.0
-    fpdist_error = 0.0
-    fpdist_temp_sum = 0.0
-    fpdsit_temp_num = 0.0
+    # fpdist_error = 0.0
+    # fpdist_temp_sum = 0.0
+    # fpdsit_temp_num = 0.0
     
     for i_iter in range(iter_max+1):
         # del_fp = np.zeros(3)
         for i_atom in range(len(rxyz_new)):
             del_fp = np.zeros(3)
-            temp_del_fp = np.zeros(3)
-            accum_error = np.zeros(3)
-            temp_sum = np.zeros(3)
+            # temp_del_fp = np.zeros(3)
+            # accum_error = np.zeros(3)
+            # temp_sum = np.zeros(3)
             for j_atom in range(len(rxyz_new)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
@@ -60,10 +60,11 @@ def test1_CG(v1):
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
                     diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
                 
+                '''
                 # Kahan sum implementation
-                temp_del_fp[0] = accum_error[0] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_x )
-                temp_del_fp[1] = accum_error[1] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_y )
-                temp_del_fp[2] = accum_error[2] + const_factor*np.matmul( diff_fp.T,  diff_D_fp_z )
+                temp_del_fp[0] = accum_error[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
+                temp_del_fp[1] = accum_error[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
+                temp_del_fp[2] = accum_error[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
                 temp_sum[0] = del_fp[0] + temp_del_fp[0]
                 temp_sum[1] = del_fp[1] + temp_del_fp[1]
                 temp_sum[2] = del_fp[2] + temp_del_fp[2]
@@ -78,6 +79,16 @@ def test1_CG(v1):
                 fpdist_temp_sum = fp_dist + fpdist_temp_num
                 fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
                 fp_dist = fpdist_temp_sum
+                '''
+                del_fp[0] = del_fp[0] + np.vdot( diff_D_fp_x, diff_fp )
+                del_fp[1] = del_fp[1] + np.vdot( diff_D_fp_y, diff_fp )
+                del_fp[2] = del_fp[2] + np.vdot( diff_D_fp_z, diff_fp )
+                fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                
+                
+                
+                
+                
                 
                 '''
                 for i_common in range(common_count):
@@ -121,7 +132,7 @@ def test1_CG(v1):
                           format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
                 '''
             
-            rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp
+            rxyz_new[i_atom] = rxyz_new[i_atom] - const_factor*del_fp
             
             print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                   format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)))
