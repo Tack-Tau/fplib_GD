@@ -80,10 +80,27 @@ def test1_CG(v1):
                 fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
                 fp_dist = fpdist_temp_sum
                 '''
-                del_fp[0] = del_fp[0] + np.vdot( diff_D_fp_x, diff_fp )
-                del_fp[1] = del_fp[1] + np.vdot( diff_D_fp_y, diff_fp )
-                del_fp[2] = del_fp[2] + np.vdot( diff_D_fp_z, diff_fp )
+                
+                
+                
+                del_fp[0] = del_fp[0] + np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                
+                
+                
+                '''
+                print ("diff_D_fp = [{0:s}, {1:s}, {2:s}]".\
+                      format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False), \
+                             np.array_str(diff_D_fp_y, precision=6, suppress_small=False), \
+                             np.array_str(diff_D_fp_z, precision=6, suppress_small=False)))
+                
+                print ( "diff_fp = \n{0:s}".\
+                      format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
+                '''
+                print ( "del_fp = [{0:.6f}, {1:.6f}, {2:.6f}]".\
+                      format(del_fp[0], del_fp[1], del_fp[2]) )
                 
                 
                 
@@ -132,12 +149,13 @@ def test1_CG(v1):
                           format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
                 '''
             
-            rxyz_new[i_atom] = rxyz_new[i_atom] - const_factor*del_fp
+            rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp
             
-            print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
-                  format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)))
-            print ( "Finger print energy = {0:s}".format(np.array_str(fp_dist, \
-                                               precision=6, suppress_small=False)) )
+            print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
+                  format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+            print ( "Finger print energy = {0:s}".\
+                  format(np.array_str(fp_dist, precision=6, suppress_small=False)))
+            
     
     
     '''

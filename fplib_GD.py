@@ -795,6 +795,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     
     N_vec = len(sorted_Varr_om[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
+    # D_fp = np.zeros((nx*lseg, 1))
     if x == 0:
         Dx_om = get_Dx_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
         for i in range(N_vec):
@@ -815,7 +816,8 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     
     # D_fp = np.real(D_fp)
     # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
-    D_fp_factor = np.zeros(N_vec)
+    # D_fp_factor = np.zeros(N_vec)
+    D_fp_factor = np.zeros(N_vec) + 1j*np.zeros(N_vec)
     for N in range(N_vec):
         D_fp_factor[N] = 1/D_fp[N][0]
         D_fp[N][0] = (np.exp( np.log(D_fp_factor[N]*D_fp[N][0] + 1.2) ) - 1.2)/D_fp_factor[N]
@@ -857,10 +859,10 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
     i_sphere_count = 0
     nat_j_sphere = len(rxyz_sphere_j)
     iat_in_j_sphere = False
-    rxyz = rxyz.tolist()
-    rxyz_sphere_j = rxyz_sphere_j.tolist()
+    rxyz_list = rxyz.tolist()
+    rxyz_sphere_j_list = rxyz_sphere_j.tolist()
     for j in range(nat_j_sphere):
-        if rxyz[iat] == rxyz_sphere_j[j]:
+        if rxyz_list[iat] == rxyz_sphere_j_list[j]:
             iat_in_j_sphere = True
             return iat_in_j_sphere, j
         else:
@@ -1120,7 +1122,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     else:
         lseg = 4
         l = 2
-    lfp = []
+    # lfp = []
     sfp = []
     amp, n_sphere, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
@@ -1129,10 +1131,13 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     val, vec = np.linalg.eig(gom)
     val = np.real(val)
-    fp0 = np.zeros(nx*lseg)
+    # fp0 = np.zeros(nx*lseg)
+    fp0 = np.zeros((nx*lseg, 1))
     for i in range(len(val)):
-        fp0[i] = val[i]
-    lfp = sorted(fp0)
+        # fp0[i] = val[i]
+        fp0[i][0] = val[i]
+    # lfp = sorted(fp0)
+    lfp = fp0[ fp0[ : , 0].argsort(), : ]
     # lfp.append(sorted(fp0))
     pvec = np.real(np.transpose(vec)[0])
     # contracted overlap matrix
@@ -1148,14 +1153,17 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         #         if abs(omx[i][j] - omx[j][i]) > 1e-6:
         #             print ("ERROR", i, j, omx[i][j], omx[j][i])
         # print omx
-        sfp0 = np.linalg.eigvals(omx)
-        sfp.append(sorted(sfp0))
+        # sfp0 = np.linalg.eigvals(omx)
+        # sfp.append(sorted(sfp0))
+        sfp = np.linalg.eigvals(omx)
+        sfp.append(sorted(sfp))
 
     # print ("n_sphere_min", min(n_sphere_list))
     # print ("n_shpere_max", max(n_sphere_list)) 
 
     if contract:
-        sfp = np.array(sfp, float)
+        # sfp = np.array(sfp, float)
+        sfp = np.vstack( (np.array(sfp, float), ) ).T
         return sfp
     else:
         lfp = np.array(lfp, float)
@@ -1211,12 +1219,13 @@ def get_rxyz_delta(rxyz):
 
 # @numba.jit()
 def get_fpdist(ntyp, types, fp1, fp2):
-    lenfp = np.shape(fp1)
+    # lenfp, = np.shape(fp1)
     # nat, lenfp = np.shape(fp1)
     # fpd = 0.0
     tfpd = fp1 - fp2
     # fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
-    fpd = np.dot(tfpd, tfpd)/lenfp
+    # fpd = np.dot(tfpd, tfpd)/lenfp
+    fpd = np.matmul(tfpd.T, tfpd)
     return fpd
 
 '''
