@@ -1091,6 +1091,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                 ityp_sphere = 0
                             else:
                                 ityp_sphere = types[jat]
+                            '''
                             for il in range(lseg):
                                 if il == 0:
                                     # print len(ind)
@@ -1100,6 +1101,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                 else:
                                     ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
+                             '''
         n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
     # for n_iter in range(nx-n_sphere+1):
