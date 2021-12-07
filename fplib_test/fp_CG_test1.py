@@ -8,14 +8,14 @@ np.random.seed(42)
 #Calculate crystal atomic finger print force and steepest descent update
 def test1_CG(v1):
     ntyp = 1
-    nx = 50
+    nx = 100
     lmax = 0
     cutoff = 4.5
     znucl = np.array([3], int)
     lat, rxyz, types = fplib_GD.readvasp(v1)
     contract = False
     i_iter = 0
-    iter_max = 4
+    iter_max = 20
     atol = 1e-6
     step_size = 1e-4
     const_factor = 1.0e+31
@@ -82,9 +82,9 @@ def test1_CG(v1):
                 '''
                 
                 
-                diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x), ) ).T
-                diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y), ) ).T
-                diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z), ) ).T
+                diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
+                diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
+                diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
                 del_fp[0] = del_fp[0] + np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
                 del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
                 del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
@@ -92,7 +92,7 @@ def test1_CG(v1):
                 
                 
                 
-                
+                '''
                 print ("diff_D_fp_x = \n{0:s}".\
                       format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False)))
                 print ("diff_D_fp_y = \n{0:s}".\
@@ -104,7 +104,7 @@ def test1_CG(v1):
                 
                 print ( "diff_fp = \n{0:s}".\
                       format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
-                
+                '''
                 print ( "del_fp = [{0:.6f}, {1:.6f}, {2:.6f}]".\
                       format(del_fp[0], del_fp[1], del_fp[2]) )
                 
@@ -155,7 +155,7 @@ def test1_CG(v1):
                           format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
                 '''
             
-            rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp
+            rxyz_new[i_atom] = rxyz_new[i_atom] - (1e+4)*del_fp
             
             print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                   format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
