@@ -263,8 +263,8 @@ def test3_CG(v1):
     atol = 1.0e-6
     step_size = 1e-4
     const_factor = 1.0e+31
-    # fp_dist = 0.0
-    # del_fp_dist = 0.0
+    fp_dist = 0.0
+    del_fp_dist = 0.0
     rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
         fp_dist = 0.0
@@ -304,10 +304,11 @@ def test3_CG(v1):
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                 diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
-                del_fp[0] = del_fp[0] + np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
-                del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
-                del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
+                del_fp[0] = del_fp[0] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[1] = del_fp[1] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[2] = del_fp[2] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 # del_fp_dist = del_fp_dist + np.absolute( np.dot(rxyz_delta[i_atom], del_fp) )
+                del_fp_dist = del_fp_dist - rxyz_new[0][0]*del_fp[0]
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
                 '''
                 print ("diff_D_fp_x = \n{0:s}".\
@@ -327,7 +328,7 @@ def test3_CG(v1):
             
             
             # print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
-            # print("del_fp_dist = ", del_fp_dist)
+            print("del_fp_dist = ", del_fp_dist)
             print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                   format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
             print ( "Finger print energy = {0:s}".\
