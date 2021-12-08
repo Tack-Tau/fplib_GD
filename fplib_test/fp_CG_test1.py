@@ -61,7 +61,7 @@ def test1_CG(v1):
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
                     diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
                 
-                
+                '''
                 # Kahan sum implementation
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
@@ -83,9 +83,9 @@ def test1_CG(v1):
                 fpdist_temp_sum = fp_dist + fpdist_temp_num
                 fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
                 fp_dist = fpdist_temp_sum
-                
-                
                 '''
+                
+                
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                 diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
@@ -93,7 +93,7 @@ def test1_CG(v1):
                 del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
                 del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
-                '''
+                
                 
                 
                 '''
@@ -263,11 +263,14 @@ def test3_CG(v1):
     atol = 1.0e-6
     step_size = 1e-4
     const_factor = 1.0e+31
-    del_fp_dist = 0.0
+    # fp_dist = 0.0
+    # del_fp_dist = 0.0
     rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
-        rxyz_delta = step_size*fplib_GD.get_rxyz_delta(rxyz)
-        rxyz_new = np.add(rxyz_new, rxyz_delta)
+        fp_dist = 0.0
+        # rxyz_delta = step_size*fplib_GD.get_rxyz_delta(rxyz)
+        # rxyz_new = np.add(rxyz_new, rxyz_delta)
+        rxyz_new[0][0] = rxyz_new[0][0] + step_size
         for i_atom in range(len(rxyz)):
             del_fp = np.zeros(3)
             for j_atom in range(len(rxyz)):
@@ -297,15 +300,40 @@ def test3_CG(v1):
                     diff_D_fp_x = D_fp_mat_iat[0, :, i_atom]
                     diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
                     diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
-                del_fp[0] = del_fp[0] + const_factor*np.vdot( diff_D_fp_x, diff_fp )
-                del_fp[1] = del_fp[1] + const_factor*np.vdot( diff_D_fp_y, diff_fp )
-                del_fp[2] = del_fp[2] + const_factor*np.vdot( diff_D_fp_z, diff_fp )
-                del_fp_dist = del_fp_dist + np.absolute( np.dot(rxyz_delta[i_atom], del_fp) )
-            print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
+                
+                diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
+                diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
+                diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
+                del_fp[0] = del_fp[0] + np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
+                # del_fp_dist = del_fp_dist + np.absolute( np.dot(rxyz_delta[i_atom], del_fp) )
+                fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                '''
+                print ("diff_D_fp_x = \n{0:s}".\
+                      format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False)))
+                print ("diff_D_fp_y = \n{0:s}".\
+                      format(np.array_str(diff_D_fp_y, precision=6, suppress_small=False)))
+                print ("diff_D_fp_z = \n{0:s}".\
+                      format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False), \
+                             np.array_str(diff_D_fp_y, precision=6, suppress_small=False), \
+                             np.array_str(diff_D_fp_z, precision=6, suppress_small=False)))
+                
+                print ( "diff_fp = \n{0:s}".\
+                      format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
+                '''
+                print ( "del_fp = [{0:.6e}, {1:.6e}, {2:.6e}]".\
+                      format(del_fp[0], del_fp[1], del_fp[2]) )
+            
+            
+            # print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
             # print("del_fp_dist = ", del_fp_dist)
+            print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
+                  format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+            print ( "Finger print energy = {0:s}".\
+                  format(np.array_str(fp_dist, precision=6, suppress_small=False)))
     
-    
-    fp_dist = 0.0
+    '''
     for ityp in range(ntyp):
         itype = ityp + 1
         for iat in range(len(rxyz_new)):
@@ -322,6 +350,7 @@ def test3_CG(v1):
 
     print("sum of del_fp_dist = {0:.6e}".format(del_fp_dist))
     print("fp_dist = ", fp_dist)
+    '''
     # return fp_dist
     # return rxyz
 
@@ -330,6 +359,6 @@ def test3_CG(v1):
 if __name__ == "__main__":
     args = sys.argv
     v1 = args[1]
-    test1_CG(v1)
+    # test1_CG(v1)
     # test2_CG(v1)
-    # test3_CG(v1)
+    test3_CG(v1)
