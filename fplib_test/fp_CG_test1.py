@@ -21,18 +21,19 @@ def test1_CG(v1):
     # const_factor = 1.0e+31
     rxyz_new = rxyz.copy()
     # fp_dist = 0.0
-    fpdist_error = 0.0
-    fpdist_temp_sum = 0.0
-    fpdsit_temp_num = 0.0
+    # fpdist_error = 0.0
+    # fpdist_temp_sum = 0.0
+    # fpdsit_temp_num = 0.0
     
     for i_iter in range(iter_max+1):
-        # del_fp = np.zeros(3)
+        del_fp = np.zeros((len(rxyz_new), 3))
+        sum_del_fp = np.zeros(3)
         fp_dist = 0.0
         for i_atom in range(len(rxyz_new)):
-            del_fp = np.zeros(3)
-            temp_del_fp = np.zeros(3)
-            accum_error = np.zeros(3)
-            temp_sum = np.zeros(3)
+            # del_fp = np.zeros(3)
+            # temp_del_fp = np.zeros(3)
+            # accum_error = np.zeros(3)
+            # temp_sum = np.zeros(3)
             for j_atom in range(len(rxyz_new)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
@@ -53,16 +54,16 @@ def test1_CG(v1):
                 iat_in_j_sphere, iat_j = fplib_GD.get_common_sphere(ntyp, \
                               nx, lmax, lat, rxyz_new, types, znucl, cutoff, i_atom, j_atom)
                 if iat_in_j_sphere:
-                    diff_D_fp_x = D_fp_mat_iat[0, :, i_atom] - D_fp_mat_jat[0, :, iat_j]
-                    diff_D_fp_y = D_fp_mat_iat[1, :, i_atom] - D_fp_mat_jat[1, :, iat_j]
-                    diff_D_fp_z = D_fp_mat_iat[2, :, i_atom] - D_fp_mat_jat[2, :, iat_j]
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :] - D_fp_mat_jat[iat_j, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :] - D_fp_mat_jat[iat_j, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :] - D_fp_mat_jat[iat_j, 2, :]
                 else:
-                    diff_D_fp_x = D_fp_mat_iat[0, :, i_atom]
-                    diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
-                    diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :]
                 
-                '''
                 # Kahan sum implementation
+                '''
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                 diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
@@ -89,13 +90,16 @@ def test1_CG(v1):
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                 diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
-                del_fp[0] = del_fp[0] + np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
-                del_fp[1] = del_fp[1] + np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
-                del_fp[2] = del_fp[2] + np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
+                del_fp[i_atom][0] = del_fp[i_atom][0] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[i_atom][1] = del_fp[i_atom][1] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[i_atom][2] = del_fp[i_atom][2] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
                 
                 
-                
+                # Debugging
                 '''
                 print ("diff_D_fp_x = \n{0:s}".\
                       format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False)))
@@ -108,15 +112,16 @@ def test1_CG(v1):
                 
                 print ( "diff_fp = \n{0:s}".\
                       format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
-                '''
                 print ( "del_fp = [{0:.6e}, {1:.6e}, {2:.6e}]".\
-                      format(del_fp[0], del_fp[1], del_fp[2]) )
+                      format(del_fp[i_atom][0], del_fp[i_atom][1], del_fp[i_atom][2]) )
+                '''
                 
                 
                 
                 
                 
                 
+                # Previous iat in j_sphere routine
                 '''
                 for i_common in range(common_count):
                     diff_D_fp_x = D_fp_mat_iat[0, :, i_rxyz_sphere_1[i_common]] - \
@@ -128,20 +133,20 @@ def test1_CG(v1):
                     del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
                     del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
                     del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
-                # if i_atom in i_rxyz_sphere_1 and j_atom in i_rxyz_sphere_2:
-                #     diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
-                #     diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
-                #     diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
+                # if iat_in_j_sphere:
+                #     diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :] - D_fp_mat_jat[iat_j, 0, :]
+                #     diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :] - D_fp_mat_jat[iat_j, 1, :]
+                #     diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :] - D_fp_mat_jat[iat_j, 2, :]
                 # else:
-                #     diff_D_fp_x = np.zeros_like(diff_fp)
-                #     diff_D_fp_y = np.zeros_like(diff_fp)
-                #     diff_D_fp_z = np.zeros_like(diff_fp)
+                #     diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :]
+                #     diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :]
+                #     diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :]
                 # diff_D_fp_x = D_fp_mat[0, :, i_atom] - D_fp_mat[0, :, j_atom]
                 # diff_D_fp_y = D_fp_mat[1, :, i_atom] - D_fp_mat[1, :, j_atom]
                 # diff_D_fp_z = D_fp_mat[2, :, i_atom] - D_fp_mat[2, :, j_atom]
-                # del_fp[0] = del_fp[0] + np.matmul( diff_fp.T,  diff_D_fp_x )
-                # del_fp[1] = del_fp[1] + np.matmul( diff_fp.T,  diff_D_fp_y )
-                # del_fp[2] = del_fp[2] + np.matmul( diff_fp.T,  diff_D_fp_z )
+                # del_fp[0] = del_fp[0] + 2.0*np.matmul( diff_fp.T,  diff_D_fp_x )
+                # del_fp[1] = del_fp[1] + 2.0*np.matmul( diff_fp.T,  diff_D_fp_y )
+                # del_fp[2] = del_fp[2] + 2.0*np.matmul( diff_fp.T,  diff_D_fp_z )
                 '''
                 
                 
@@ -159,12 +164,19 @@ def test1_CG(v1):
                           format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
                 '''
             
-            rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp/np.linalg.norm(del_fp)
+            # rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp/np.linalg.norm(del_fp)
             
-            print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
-                  format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
-            print ( "Finger print energy = {0:s}".\
-                  format(np.array_str(fp_dist, precision=6, suppress_small=False)))
+        sum_del_fp = np.sum(del_fp, axis=0)
+        for ii_atom in range(len(rxyz_new)):
+            del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
+            rxyz_new[ii_atom] = rxyz_new[ii_atom] - \
+                                step_size*del_fp[ii_atom, :]/np.linalg.norm(del_fp[ii_atom, :])
+        print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
+              format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+        print ( "del_fp = {0:s}".\
+              format(np.array_str(del_fp, precision=6, suppress_small=False)) )
+        print ( "Finger print energy = {0:s}".\
+              format(np.array_str(fp_dist, precision=6, suppress_small=False)) )
             
     
     
@@ -267,12 +279,14 @@ def test3_CG(v1):
     del_fp_dist = 0.0
     rxyz_new = rxyz.copy()
     for i_iter in range(iter_max+1):
+        del_fp = np.zeros((len(rxyz_new), 3))
+        sum_del_fp = np.zeros(3)
         fp_dist = 0.0
         # rxyz_delta = step_size*fplib_GD.get_rxyz_delta(rxyz)
         # rxyz_new = np.add(rxyz_new, rxyz_delta)
         rxyz_new[0][0] = rxyz_new[0][0] + step_size
         for i_atom in range(len(rxyz)):
-            del_fp = np.zeros(3)
+            # del_fp = np.zeros(3)
             for j_atom in range(len(rxyz)):
                 fp_iat = \
                 fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
@@ -293,22 +307,25 @@ def test3_CG(v1):
                 iat_in_j_sphere, iat_j = fplib_GD.get_common_sphere(ntyp, \
                               nx, lmax, lat, rxyz_new, types, znucl, cutoff, i_atom, j_atom)
                 if iat_in_j_sphere:
-                    diff_D_fp_x = D_fp_mat_iat[0, :, i_atom] - D_fp_mat_jat[0, :, iat_j]
-                    diff_D_fp_y = D_fp_mat_iat[1, :, i_atom] - D_fp_mat_jat[1, :, iat_j]
-                    diff_D_fp_z = D_fp_mat_iat[2, :, i_atom] - D_fp_mat_jat[2, :, iat_j]
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :] - D_fp_mat_jat[iat_j, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :] - D_fp_mat_jat[iat_j, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :] - D_fp_mat_jat[iat_j, 2, :]
                 else:
-                    diff_D_fp_x = D_fp_mat_iat[0, :, i_atom]
-                    diff_D_fp_y = D_fp_mat_iat[1, :, i_atom]
-                    diff_D_fp_z = D_fp_mat_iat[2, :, i_atom]
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :]
                 
                 diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                 diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                 diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
-                del_fp[0] = del_fp[0] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
-                del_fp[1] = del_fp[1] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
-                del_fp[2] = del_fp[2] + 2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
+                del_fp[i_atom][0] = del_fp[i_atom][0] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[i_atom][1] = del_fp[i_atom][1] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[i_atom][2] = del_fp[i_atom][2] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 # del_fp_dist = del_fp_dist + np.absolute( np.dot(rxyz_delta[i_atom], del_fp) )
-                del_fp_dist = del_fp_dist - rxyz_new[0][0]*del_fp[0]
+                del_fp_dist = del_fp_dist - rxyz_new[0][0]*del_fp[i_atom][0]
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
                 '''
                 print ("diff_D_fp_x = \n{0:s}".\
@@ -322,17 +339,21 @@ def test3_CG(v1):
                 
                 print ( "diff_fp = \n{0:s}".\
                       format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
-                '''
                 print ( "del_fp = [{0:.6e}, {1:.6e}, {2:.6e}]".\
-                      format(del_fp[0], del_fp[1], del_fp[2]) )
+                      format(del_fp[i_atom][0], del_fp[i_atom][1], del_fp[i_atom][2]) )
+                '''
+                
             
-            
-            # print ("i_iter = {0:d} del_fp_dist = {1:.6e}".format(i_iter, del_fp_dist))
-            print("del_fp_dist = ", del_fp_dist)
-            print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
-                  format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
-            print ( "Finger print energy = {0:s}".\
-                  format(np.array_str(fp_dist, precision=6, suppress_small=False)))
+        sum_del_fp = np.sum(del_fp, axis=0)
+        for ii_atom in range(len(rxyz_new)):
+            del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
+        print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
+              format(i_iter, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+        print("del_fp_dist = {0:.6e}".format(del_fp_dist) )
+        print ( "del_fp = \n{0:s}".\
+              format(np.array_str(del_fp, precision=6, suppress_small=False)) )
+        print ( "Finger print energy = {0:s}".\
+              format(np.array_str(fp_dist, precision=6, suppress_small=False)) )
     
     '''
     for ityp in range(ntyp):

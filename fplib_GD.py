@@ -73,704 +73,65 @@ def kron_delta(i,j):
 
 
 # @numba.jit()
-def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
+def get_D_gom(lseg, rxyz, rcov, amp, D_n):
     # s orbital only lseg == 1
     nat = len(rxyz)    
     if lseg == 1:
-        Dx_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dx_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # if D_n == iat:
-                #     Dx_om[iat][jat] = -(2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # elif D_n == jat:
-                #     Dx_om[iat][jat] =  (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dx_om[iat][jat] = 0.0
+        D_om = np.zeros((3, nat, nat))
+        for x in range(3):
+            for iat in range(nat):
+                for jat in range(nat):
+                    d = rxyz[iat] - rxyz[jat]
+                    d2 = np.vdot(d, d)
+                    r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                    sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
+                    # Derivative of <s_i | s_j>
+                    D_om[x][iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]
                 
     else:
         # for both s and p orbitals
-        Dx_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dx_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
-                # D_n != 4*jat+2 and D_n != 4*jat:
-                #     Dx_om[4*iat][4*jat] = -(2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat][4*jat] =  (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dx_om[4*iat][4*jat] = 0.0
+        D_om = np.zeros((3, 4*nat, 4*nat))
+        for x in range(3):
+            for iat in range(nat):
+                for jat in range(nat):
+                    d = rxyz[iat] - rxyz[jat]
+                    d2 = np.vdot(d, d)
+                    r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                    sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
+                    # Derivative of <s_i | s_j>
+                    D_om[x][4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]
                 
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dx_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dx_om[4*iat][4*jat+2] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dx_om[4*iat][4*jat+3] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 2.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dx_om[4*iat][4*jat+1] = 0.0
-                #     Dx_om[4*iat][4*jat+2] = 0.0
-                #     Dx_om[4*iat][4*jat+3] = 0.0
+                    # Derivative of <s_i | p_j>
+                    stv = np.sqrt(8.0) * rcov[jat] * r * sji
+                    for i_sp in range(3):
+                        D_om[x][4*iat][4*jat+i_sp+1] = \
+                        ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                        stv * amp[iat] * amp[jat] * ( kron_delta(x, i_sp) - \
+                                                     np.dot( d[x], d[i_sp] ) * 2.0*r  )
 
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dx_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
-                #     - stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dx_om[4*iat+2][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dx_om[4*iat+3][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 2.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dx_om[4*iat+1][4*jat] = 0.0
-                #     Dx_om[4*iat+2][4*jat] = 0.0
-                #     Dx_om[4*iat+3][4*jat] = 0.0
+                    # Derivative of <p_i | s_j>
+                    stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
+                    for i_ps in range(3):
+                        D_om[x][4*iat+i_ps+1][4*jat] = \
+                        ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                        stv * amp[iat] * amp[jat] * ( kron_delta(x, i_ps) - \
+                                                     np.dot( d[x], d[i_ps] ) * 2.0*r )
 
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dx_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+1][4*jat+1] = -(2.0*r) * d[0] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (2.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+1][4*jat+2] = -(2.0*r) * d[0] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+1][4*jat+3] = -(2.0*r) * d[0] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[2]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+2][4*jat+1] = -(2.0*r) * d[0] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+2][4*jat+2] = -(2.0*r) * d[0] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+2][4*jat+3] = -(2.0*r) * d[0] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dx_om[4*iat+3][4*jat+1] = -(2.0*r) * d[0] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[2]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+3][4*jat+2] = -(2.0*r) * d[0] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+3][4*jat+3] = -(2.0*r) * d[0] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat+1][4*jat+1] = (2.0*r) * d[0] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (-2.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+2][4*jat+1] = (2.0*r) * d[0] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+3][4*jat+1] = (2.0*r) * d[0] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat+1][4*jat+2] = (2.0*r) * d[0] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+2][4*jat+2] = (2.0*r) * d[0] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+3][4*jat+2] = (2.0*r) * d[0] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dx_om[4*iat+1][4*jat+3] = (2.0*r) * d[0] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+2][4*jat+3] = (2.0*r) * d[0] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+3][4*jat+3] = (2.0*r) * d[0] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0        ) * amp[iat] * amp[jat]
-                # else:
-                #     Dx_om[4*iat+1][4*jat+1] = 0.0
-                #     Dx_om[4*iat+1][4*jat+2] = 0.0
-                #     Dx_om[4*iat+1][4*jat+3] = 0.0
-                #     Dx_om[4*iat+2][4*jat+1] = 0.0
-                #     Dx_om[4*iat+2][4*jat+2] = 0.0
-                #     Dx_om[4*iat+2][4*jat+3] = 0.0
-                #     Dx_om[4*iat+3][4*jat+1] = 0.0
-                #     Dx_om[4*iat+3][4*jat+2] = 0.0
-                #     Dx_om[4*iat+3][4*jat+3] = 0.0
+                    # Derivative of <p_i | p_j>
+                    stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
+                    for i_pp in range(3):
+                        for j_pp in range(3):
+                            D_om[x][4*iat+i_pp+1][4*jat+j_pp+1] = \
+                            ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                            d[x] * stv * amp[iat] * amp[jat] * \
+                            ( kron_delta(x, j_pp) - 2.0 * r * d[i_pp] * d[j_pp] ) + \
+                            ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                            stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] + \
+                                                         kron_delta(x, j_pp) * d[i_pp] )
                 
-    return Dx_om
-
-
-
-# @numba.jit()
-def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
-    # s orbital only lseg == 1
-    nat = len(rxyz)    
-    if lseg == 1:
-        Dy_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dy_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # if D_n == iat:
-                #     Dy_om[iat][jat] = -(2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # elif D_n == jat:
-                #     Dy_om[iat][jat] =  (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dy_om[iat][jat] = 0.0
-                
-    else:
-        # for both s and p orbitals
-        Dy_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
-                # Derivative of <s_i | s_j>
-                Dy_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
-                # D_n != 4*jat+2 and D_n != 4*jat:
-                #     Dy_om[4*iat][4*jat] = -(2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat][4*jat] =  (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dy_om[4*iat][4*jat] = 0.0
-                
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dy_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dy_om[4*iat][4*jat+2] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                #    Dy_om[4*iat][4*jat+3] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 2.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dy_om[4*iat][4*jat+1] = 0.0
-                #     Dy_om[4*iat][4*jat+2] = 0.0
-                #     Dy_om[4*iat][4*jat+3] = 0.0
-
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dy_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dy_om[4*iat+2][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 2.0*r * amp[iat] * amp[jat] 
-                #     Dy_om[4*iat+3][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 2.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dy_om[4*iat+1][4*jat] = 0.0
-                #     Dy_om[4*iat+2][4*jat] = 0.0
-                #     Dy_om[4*iat+3][4*jat] = 0.0
-
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dy_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+1][4*jat+1] = -(4.0*r) * d[1] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+1][4*jat+2] = -(4.0*r) * d[1] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dx_om[4*iat+1][4*jat+3] = -(4.0*r) * d[1] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+2][4*jat+1] = -(4.0*r) * d[1] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+2][4*jat+2] = -(4.0*r) * d[1] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (2.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+2][4*jat+3] = -(4.0*r) * d[1] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[2]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dy_om[4*iat+3][4*jat+1] = -(4.0*r) * d[1] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+3][4*jat+2] = -(4.0*r) * d[1] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[2]       ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+3][4*jat+3] = -(4.0*r) * d[1] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat+1][4*jat+1] = (4.0*r) * d[1] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+2][4*jat+1] = (4.0*r) * d[1] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+3][4*jat+1] = (4.0*r) * d[1] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat+1][4*jat+2] = (4.0*r) * d[1] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+2][4*jat+2] = (4.0*r) * d[1] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (-2.0 * d[1]       ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+3][4*jat+2] = (4.0*r) * d[1] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dy_om[4*iat+1][4*jat+3] = (4.0*r) * d[1] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+2][4*jat+3] = (4.0*r) * d[1] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[2]        ) * amp[iat] * amp[jat]
-                #     Dy_om[4*iat+3][4*jat+3] = (4.0*r) * d[1] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                # else:
-                #     Dy_om[4*iat+1][4*jat+1] = 0.0
-                #     Dy_om[4*iat+1][4*jat+2] = 0.0
-                #     Dy_om[4*iat+1][4*jat+3] = 0.0
-                #     Dy_om[4*iat+2][4*jat+1] = 0.0
-                #     Dy_om[4*iat+2][4*jat+2] = 0.0
-                #     Dy_om[4*iat+2][4*jat+3] = 0.0
-                #     Dy_om[4*iat+3][4*jat+1] = 0.0
-                #     Dy_om[4*iat+3][4*jat+2] = 0.0
-                #     Dy_om[4*iat+3][4*jat+3] = 0.0
-                
-    return Dy_om
-
-
-
-# @numba.jit()
-def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
-    # s orbital only lseg == 1
-    nat = len(rxyz)    
-    if lseg == 1:
-        Dz_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dz_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # if D_n == iat:
-                #     Dz_om[iat][jat] = -(2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # elif D_n == jat:
-                #     Dz_om[iat][jat] =  (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dz_om[iat][jat] = 0.0
-                
-    else:
-        # for both s and p orbitals
-        Dz_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
-                # Derivative of <s_i | s_j>
-                Dz_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # if D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 and  \
-                # D_n != 4*jat+2 and D_n != 4*jat:
-                #     Dz_om[4*iat][4*jat] = -(4.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat][4*jat] =  (4.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                # else:
-                #     Dz_om[4*iat][4*jat] = 0.0
-                
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dz_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat][4*jat+1] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat][4*jat+2] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat][4*jat+3] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat][4*jat+1] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                #     Dz_om[4*iat][4*jat+2] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                #     Dz_om[4*iat][4*jat+3] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dz_om[4*iat][4*jat+1] = 0.0
-                #     Dz_om[4*iat][4*jat+2] = 0.0
-                #     Dz_om[4*iat][4*jat+3] = 0.0
-
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dz_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+1][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+2][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+3][4*jat] = stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # elif D_n == 4*jat and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat+1][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[0], d[0] ) * 4.0*r * amp[iat] * amp[jat] 
-                #     Dz_om[4*iat+2][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[1], d[1] ) * 4.0*r * amp[iat] * amp[jat] 
-                #     Dz_om[4*iat+3][4*jat] = - stv * amp[iat] * amp[jat] \
-                #     + stv * np.dot( d[2], d[2] ) * 4.0*r * amp[iat] * amp[jat] 
-                # else:
-                #     Dz_om[4*iat+1][4*jat] = 0.0
-                #     Dz_om[4*iat+2][4*jat] = 0.0
-                #     Dz_om[4*iat+3][4*jat] = 0.0
-
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dz_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                # if D_n == 4*iat+1 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+1][4*jat+1] = -(4.0*r) * d[2] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+1][4*jat+2] = -(4.0*r) * d[2] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+1][4*jat+3] = -(4.0*r) * d[2] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[0]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+2 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+2][4*jat+1] = -(4.0*r) * d[2] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+2][4*jat+2] = -(4.0*r) * d[2] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+2][4*jat+3] = -(4.0*r) * d[2] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[1]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*iat+3 and D_n != 4*jat and D_n != 4*jat+1 \
-                # and D_n != 4*jat+2 and D_n != 4*jat+3:
-                #     Dz_om[4*iat+3][4*jat+1] = -(4.0*r) * d[2] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+3][4*jat+2] = -(4.0*r) * d[2] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (1.0 * d[1]        ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+3][4*jat+3] = -(4.0*r) * d[2] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (2.0 * d[2]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+1 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat+1][4*jat+1] = (4.0*r) * d[2] * stv \
-                #     * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+2][4*jat+1] = (4.0*r) * d[2] * stv \
-                #     * (d[1] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0          ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+3][4*jat+1] = (4.0*r) * d[2] * stv \
-                #     * (d[2] * d[0]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[0]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+2 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat+1][4*jat+2] = (4.0*r) * d[2] * stv \
-                #     * (d[0] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+2][4*jat+2] = (4.0*r) * d[2] * stv \
-                #     * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (0.0 * 0.0         ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+3][4*jat+2] = (4.0*r) * d[2] * stv \
-                #     * (d[2] * d[1]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[1]        ) * amp[iat] * amp[jat]
-                # elif D_n == 4*jat+3 and D_n != 4*iat and D_n != 4*iat+1 \
-                # and D_n != 4*iat+2 and D_n != 4*iat+3:
-                #     Dz_om[4*iat+1][4*jat+3] = (4.0*r) * d[2] * stv \
-                #     * (d[0] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[0]        ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+2][4*jat+3] = (4.0*r) * d[2] * stv \
-                #     * (d[1] * d[2]        ) * amp[iat] * amp[jat] + \
-                #     stv * (-1.0 * d[1]       ) * amp[iat] * amp[jat]
-                #     Dz_om[4*iat+3][4*jat+3] = (4.0*r) * d[2] * stv \
-                #     * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat] + \
-                #     stv * (-2.0 * d[2]       ) * amp[iat] * amp[jat]
-                # else:
-                #     Dz_om[4*iat+1][4*jat+1] = 0.0
-                #     Dz_om[4*iat+1][4*jat+2] = 0.0
-                #     Dz_om[4*iat+1][4*jat+3] = 0.0
-                #     Dz_om[4*iat+2][4*jat+1] = 0.0
-                #     Dz_om[4*iat+2][4*jat+2] = 0.0
-                #     Dz_om[4*iat+2][4*jat+3] = 0.0
-                #     Dz_om[4*iat+3][4*jat+1] = 0.0
-                #     Dz_om[4*iat+3][4*jat+2] = 0.0
-                #     Dz_om[4*iat+3][4*jat+3] = 0.0
-                
-    return Dz_om
+    return D_om
 
 
 
@@ -796,18 +157,19 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     N_vec = len(sorted_Varr_om[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     # D_fp = np.zeros((nx*lseg, 1))
+    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
     if x == 0:
-        Dx_om = get_Dx_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
+        Dx_om = D_om[0, :, :]
         for i in range(N_vec):
             Dx_mul_V_om = np.matmul(Dx_om, sorted_Varr_om[:, i])
             D_fp[i][0] = np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om)
     elif x == 1:
-        Dy_om = get_Dy_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
+        Dy_om = D_om[1, :, :]
         for j in range(N_vec):
             Dy_mul_V_om = np.matmul(Dy_om, sorted_Varr_om[:, j])
             D_fp[j][0] = np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om)
     elif x == 2:
-        Dz_om = get_Dz_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
+        Dz_om = D_om[2, :, :]
         for k in range(N_vec):
             Dz_mul_V_om = np.matmul(Dz_om, sorted_Varr_om[:, k])
             D_fp[k][0] = np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om)
@@ -839,13 +201,13 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
     nat = len(rxyz)
-    D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
+    D_fp_mat = np.zeros((nat, 3, nx*lseg)) + 1j*np.zeros((nat, 3, nx*lseg))
     for i in range(3*nat):
         D_n = i // 3
         x = i % 3
         D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
         for j in range(len(D_fp)):
-            D_fp_mat[x][j][D_n] = D_fp[j][0]
+            D_fp_mat[D_n][x][j] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     # print("D_fp_mat = \n{0:s}".format(np.array_str(D_fp_mat, precision=6, suppress_small=False)) )
@@ -895,122 +257,294 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
 
 
 
-# Previous CG process
+# Previous get_D_om
 '''
 # @numba.jit()
-def get_null_D_fp(lseg, rxyz, rcov, amp):
-    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp, D_n)
-    null_D_fp = null_space(D_fp_mat)
-    return null_D_fp
-
-
-# @numba.jit()
-def get_norm_fp(lseg, rxyz, rcov, amp):
-    nat = len(rxyz)
-    r_vec = rxyz.reshape(3*nat, 1)
-    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
-    fp_vec = np.matmul(D_fp_mat, r_vec)
-    norm_fp = np.linalg.norm(fp_vec)
-    return norm_fp
-
-
-# @numba.jit()
-def get_grad_norm_fp(lseg, rxyz, rcov, amp):
-    nat = len(rxyz)
-    r_vec = rxyz.reshape(3*nat, 1)
-    grad_norm_fp = zeros_like(r_vec)
-    D_fp_mat = get_D_fp_mat(lseg, rxyz, rcov, amp)
-    fp_vec = np.matmul(D_fp_mat, r_vec)
-    norm_fp = get_norm_fp(lseg, rxyz, rcov, amp)
-    for iat in range(3*nat):
-        grad_norm_fp[iat] = np.matmul( np.transpose(D_fp_mat[:, iat]), r_vec ) / norm_fp
-    return grad_norm_fp
-
-
-
-# @numba.jit()
-def get_CG_norm_fp(lseg, rxyz, rcov, amp):
-    nat = len(rxyz)
-    r_init = np.zeros_like( rxyz.reshape(3*nat, 1) )
-    x0 = r_init
-    f = get_norm_fp(lseg, rxyz, rcov, amp)
-    gradf = get_grad_norm_fp(lseg, rxyz, rcov, amp)
-    return minimize(f, x0, jac = gradf, method = 'CG', options = {'gtol': 1e-8, 'disp': True})
-
-
-# @numba.jit()
-def get_fpCG(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff):
-    if lmax == 0:
-        lseg = 1
-        l = 1
+def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
+    # s orbital only lseg == 1
+    nat = len(rxyz)    
+    if lseg == 1:
+        Dx_om = np.zeros((nat, nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
+                # Derivative of <s_i | s_j>
+                Dx_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
+                
     else:
-        lseg = 4
-        l = 2
-    ixyz = get_ixyz(lat, cutoff)
-    NC = 3
-    wc = cutoff / np.sqrt(2.* NC)
-    fc = 1.0 / (2.0 * NC * wc**2)
-    nat = len(rxyz)
-    cutoff2 = cutoff**2 
-    
-    n_sphere_list = []
-    lfp = []
-    sfp = []
-    for iat in range(nat):
-        rxyz_sphere = []
-        rcov_sphere = []
-        ind = [0] * (lseg * nx)
-        amp = []
-        xi, yi, zi = rxyz[iat]
-        n_sphere = 0
-        for jat in range(nat):
-            for ix in range(-ixyz, ixyz+1):
-                for iy in range(-ixyz, ixyz+1):
-                    for iz in range(-ixyz, ixyz+1):
-                        xj = rxyz[jat][0] + ix*lat[0][0] + iy*lat[1][0] + iz*lat[2][0]
-                        yj = rxyz[jat][1] + ix*lat[0][1] + iy*lat[1][1] + iz*lat[2][1]
-                        zj = rxyz[jat][2] + ix*lat[0][2] + iy*lat[1][2] + iz*lat[2][2]
-                        d2 = (xj-xi)**2 + (yj-yi)**2 + (zj-zi)**2
-                        if d2 <= cutoff2:
-                            n_sphere += 1
-                            if n_sphere > nx:
-                                print ("FP WARNING: the cutoff is too large.")
-                            amp.append((1.0-d2*fc)**NC)
-                            # print (1.0-d2*fc)**NC
-                            rxyz_sphere.append([xj, yj, zj])
-                            rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2]) 
-                            if jat == iat and ix == 0 and iy == 0 and iz == 0:
-                                ityp_sphere = 0
-                            else:
-                                ityp_sphere = types[jat]
-                            for il in range(lseg):
-                                if il == 0:
-                                    # print len(ind)
-                                    # print ind
-                                    # print il+lseg*(n_sphere-1)
-                                    ind[il+lseg*(n_sphere-1)] = ityp_sphere * l
-                                else:
-                                    ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
-                                    # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
-        n_sphere_list.append(n_sphere)
-        rxyz_sphere = np.array(rxyz_sphere, float)
-        # full overlap matrix
-        # nid = lseg * n_sphere
-        # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-        # val, vec = np.linalg.eig(om)
-        # val = np.real(val)
-        # fp0 = np.zeros(nx*lseg)
-        # for i in range(len(val)):
-        #     fp0[i] = val[i]
-        # lfp.append(sorted(fp0))
-        # pvec = np.real(np.transpose(vec)[0])
+        # for both s and p orbitals
+        Dx_om = np.zeros((4*nat, 4*nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
+                # Derivative of <s_i | s_j>
+                Dx_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
+                
+                # Derivative of <s_i | p_j>
+                stv = np.sqrt(8.0) * rcov[jat] * r * sji
+                Dx_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dx_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dx_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
 
-    print ("n_sphere_min", min(n_sphere_list))
-    print ("n_shpere_max", max(n_sphere_list)) 
+                # Derivative of <p_i | s_j>
+                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
+                Dx_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dx_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dx_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
 
-    res_CG = get_CG_norm_fp(lseg, rxyz_sphere, rcov_sphere, amp)
-    
-    return res_CG
+                # Derivative of <p_i | p_j>
+                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
+                Dx_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] + d[0]) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dx_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[0] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                
+    return Dx_om
+
+
+
+# @numba.jit()
+def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
+    # s orbital only lseg == 1
+    nat = len(rxyz)    
+    if lseg == 1:
+        Dy_om = np.zeros((nat, nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
+                # Derivative of <s_i | s_j>
+                Dy_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
+                
+    else:
+        # for both s and p orbitals
+        Dy_om = np.zeros((4*nat, 4*nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
+                # Derivative of <s_i | s_j>
+                Dy_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
+                
+                # Derivative of <s_i | p_j>
+                stv = np.sqrt(8.0) * rcov[jat] * r * sji
+                Dy_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dy_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dy_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+
+                # Derivative of <p_i | s_j>
+                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
+                Dy_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dy_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dy_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+
+                # Derivative of <p_i | p_j>
+                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
+                Dy_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] + d[1]) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
+                                                                     * amp[iat] * amp[jat]
+                Dy_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[1] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                
+    return Dy_om
+
+
+
+# @numba.jit()
+def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
+    # s orbital only lseg == 1
+    nat = len(rxyz)    
+    if lseg == 1:
+        Dz_om = np.zeros((nat, nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
+                # Derivative of <s_i | s_j>
+                Dz_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
+                
+    else:
+        # for both s and p orbitals
+        Dz_om = np.zeros((4*nat, 4*nat))
+        for iat in range(nat):
+            for jat in range(nat):
+                d = rxyz[iat] - rxyz[jat]
+                d2 = np.vdot(d, d)
+                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
+                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
+                # Derivative of <s_i | s_j>
+                Dz_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
+                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
+                
+                # Derivative of <s_i | p_j>
+                stv = np.sqrt(8.0) * rcov[jat] * r * sji
+                Dz_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dz_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dz_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+
+                # Derivative of <p_i | s_j>
+                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
+                Dz_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dz_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+                Dz_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
+                                                                 * amp[iat] * amp[jat] )
+
+                # Derivative of <p_i | p_j>
+                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
+                Dz_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
+                                                                     * amp[iat] * amp[jat]
+                Dz_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
+                       * d[2] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
+                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] + d[2]) \
+                                                                     * amp[iat] * amp[jat]
+                
+    return Dz_om
+
 '''
 
 
