@@ -1,6 +1,7 @@
 .DS_Store
 .ipynb_checkpoints
 metacell_VASP.f90
+test22.f90
 non-convex.py
 __pycache__
 *.pyc
