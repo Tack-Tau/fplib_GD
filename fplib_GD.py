@@ -179,10 +179,10 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     # D_fp = np.real(D_fp)
     # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
     # D_fp_factor = np.zeros(N_vec)
-    D_fp_factor = np.zeros(N_vec) + 1j*np.zeros(N_vec)
-    for N in range(N_vec):
-        D_fp_factor[N] = 1/D_fp[N][0]
-        D_fp[N][0] = (np.exp( np.log(D_fp_factor[N]*D_fp[N][0] + 1.2) ) - 1.2)/D_fp_factor[N]
+    # D_fp_factor = np.zeros(N_vec) + 1j*np.zeros(N_vec)
+    # for N in range(N_vec):
+    #     D_fp_factor[N] = 1/D_fp[N][0]
+    #     D_fp[N][0] = (np.exp( np.log(D_fp_factor[N]*D_fp[N][0] + 1.2) ) - 1.2)/D_fp_factor[N]
     return D_fp
 
 
