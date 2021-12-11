@@ -588,7 +588,7 @@ def test4_CG(v1):
         
         
         sum_del_fp = np.sum(del_fp, axis=0)
-        sum_finite_def = np.sum(sum_finite_def, axis=0)
+        sum_finite_def = np.sum(finite_def, axis=0)
         for ii_atom in range(len(rxyz_new)):
             del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
             finite_def[ii_atom, :] = finite_def[ii_atom, :] - sum_finite_def/len(rxyz)
