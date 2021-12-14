@@ -927,12 +927,13 @@ def get_fp_forces(v1):
             del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
             rxyz_new[ii_atom] = rxyz_new[ii_atom] - \
                                 step_size*del_fp[ii_atom, :]/np.linalg.norm(del_fp[ii_atom, :])
+        '''
         print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
               format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
         print ( "Forces = \n{0:s}".\
               format(np.array_str(del_fp, precision=6, suppress_small=False)) )
         print ( "Finger print energy difference = {0:s}".\
               format(np.array_str(fp_dist, precision=6, suppress_small=False)) )
-            
+        '''
     
     return del_fp
