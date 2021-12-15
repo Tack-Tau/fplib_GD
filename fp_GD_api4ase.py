@@ -3,21 +3,19 @@ import rcovdata
 import sys
 import numpy as np
 import fplib_GD.readvasp as readvasp
-from ase.calculators.genericfileio import (CalculatorTemplate,
-                                           GenericFileIOCalculator)
-from ase.calculators.calculator import BaseCalculator
+import ase.units as units
+from ase.atom import Atom
 from ase.cell import Cell
-from ase.outputs import Properties, all_outputs
-from ase.utils import jsonable
-from ase.calculators.abc import GetPropertiesMixin
-from subprocess import check_output
-from pathlib import Path
+# from ase.calculators.genericfileio import (CalculatorTemplate,
+#                                            GenericFileIOCalculator)
+from ase.calculators.calculator import BaseCalculator, FileIOCalculator
 
 # from dftpy.atom import Atom
 # from dftpy.base import DirectCell
 # from dftpy.constants import LEN_CONV, ENERGY_CONV, FORCE_CONV, STRESS_CONV
 # from dftpy.interface import ConfigParser, OptimizeDensityConf
 
+'''
 class fp_GD_Template(CalculatorTemplate):
     _label = 'fp_GD'  # Controls naming of files within calculation directory
 
@@ -52,8 +50,8 @@ class fp_GD_Template(CalculatorTemplate):
             atoms=atoms, properties=properties, parameters=kw,
             pp_paths=pp_paths)
 
-    # def read_results(self, directory):
-    #     return io.read_abinit_outputs(directory, self._label)
+    def read_results(self, directory):
+        return io.read_abinit_outputs(directory, self._label)
 
 class fp_GD(GenericFileIOCalculator):
     """Class for doing fp_GD calculations.
@@ -90,7 +88,7 @@ class fp_GD(GenericFileIOCalculator):
                          profile=profile,
                          directory=directory,
                          parameters=kwargs)
-
+'''
 
 class fp_GD_Calculator(BaseCalculator):
     """Fingerprint calculator for ase"""
@@ -107,8 +105,8 @@ class fp_GD_Calculator(BaseCalculator):
         if parameters is None:
             parameters = {}
         self.parameters = dict(parameters)
-        self.atoms = None
-        self.results = {}
+        self.atoms = {}
+        self.results = None
 
     
     
@@ -143,11 +141,9 @@ class fp_GD_Calculator(BaseCalculator):
             # Save the information of structure
             self.atoms["lattice"] = lattice.copy()
             self.atoms["position"] = pos.copy()
-            '''
             lattice = np.asarray(lattice).T / LEN_CONV["Bohr"]["Angstrom"]
             cell = DirectCell(lattice)
             ions = Atom(Z=Z, pos=pos, cell=cell, basis="Crystal")
-            '''
             # ions.restart()
             '''
             if self.results is not None and self.config["MATH"]["reuse"]:
@@ -158,23 +154,18 @@ class fp_GD_Calculator(BaseCalculator):
                 results = OptimizeDensityConf(config, others["struct"], others["E_v_Evaluator"], others["nr2"])
             self.results = results
             '''
-            self.results = results
-        # energy = self.results["energypotential"]["TOTAL"].energy * ENERGY_CONV["Hartree"]["eV"]
-        # energy = self.results["density"].grid.mp.asum(energy)
-        energy = fplib_GD.get_fp_energy(v1)
-        
+        energy = self.results["energypotential"]["TOTAL"].energy * ENERGY_CONV["Hartree"]["eV"]
+        energy = self.results["density"].grid.mp.asum(energy)
         return energy
 
     def get_forces(self, atoms):
-        '''
         if self.check_restart(atoms):
             # if 'Force' not in self.config['JOB']['calctype'] :
                 # self.config['JOB']['calctype'] += ' Force'
             self.get_potential_energy(atoms)
-        '''
-        forces = fplib_GD.get_fp_forces(v1)
-        # return self.results["forces"]["TOTAL"] * FORCE_CONV["Ha/Bohr"]["eV/A"]
-        return forces
+        return self.results["forces"]["TOTAL"] * FORCE_CONV["Ha/Bohr"]["eV/A"]
+
+
 
     def get_stress(self, atoms):
         pass
