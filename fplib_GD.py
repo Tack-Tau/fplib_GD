@@ -775,8 +775,8 @@ def get_fpdist(ntyp, types, fp1, fp2):
     return fpd
 
 # Calculate crystal atomic finger print energy
-def get_fp_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                  lat, rxyz, types, znucl = np.array([3], int), cutoff = 6.5):
+def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5):
     '''
     ntyp = 1
     nx = 300
@@ -813,9 +813,9 @@ def get_fp_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
     return fp_dist
 
 #Calculate crystal atomic finger print force and steepest descent update
-def get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                  lat, rxyz, types, znucl = np.array([3], int), \
-                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
+                  iter_max = 20, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
@@ -939,9 +939,9 @@ def get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
     return del_fp
 
 # Calculate forces using finite difference method
-def get_FD_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                  lat, rxyz, types, znucl = np.array([3], int), \
-                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
+                  iter_max = 20, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
@@ -1022,9 +1022,9 @@ def get_FD_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
 
 
 # Calculate numerical inegration using Simpson's rule
-def get_simpson_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                  lat, rxyz, types, znucl = np.array([3], int), \
-                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                       lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
+                       iter_max = 20, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
