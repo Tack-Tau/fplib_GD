@@ -14,9 +14,6 @@ from ase.io.trajectory import Trajectory
 from fp_GD_api4ase import fp_GD_Calculator
 
 atoms = ase.io.read('.'+'/'+'Li-mp-51.vasp')
-lat = atoms.cell[:]
-rxyz = atoms.get_positions()
-types = fplib_GD.read_types('Li-mp-51.vasp')
 
 trajfile = 'opt.traj'
 

@@ -114,12 +114,16 @@ class fp_GD_Calculator(object):
 
     def get_potential_energy(self, atoms=None, **kwargs):
         if self.check_restart(atoms):
+            lat = atoms.cell[:]
+            rxyz = atoms.get_positions()
+            types = fplib_GD.read_types('Li-mp-51.vasp')
+            '''
             lattice = atoms.cell[:]
             Z = atoms.numbers
             # pos = atoms.get_positions()
             # pos /= LEN_CONV['Bohr']['Angstrom']
             pos = atoms.get_scaled_positions()
-            '''
+            
             if self.results is not None and len(self.atoms) > 0 :
                 pseudo = self.results["pseudo"]
                 if np.allclose(self.atoms["lattice"], atoms.cell[:]):
@@ -154,8 +158,9 @@ class fp_GD_Calculator(object):
 
     def get_forces(self, atoms=None):
         if self.check_restart(atoms):
-            # if 'Force' not in self.config['JOB']['calctype'] :
-                # self.config['JOB']['calctype'] += ' Force'
+            lat = atoms.cell[:]
+            rxyz = atoms.get_positions()
+            types = fplib_GD.read_types('Li-mp-51.vasp')
             self.get_potential_energy(atoms)
         forces = fplib_GD.get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
                                         lat, rxyz, types, znucl = np.array([3], int), \
