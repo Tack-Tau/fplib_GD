@@ -152,8 +152,8 @@ class fp_GD_Calculator(object):
             '''
         # energy = self.results["energypotential"]["TOTAL"].energy * ENERGY_CONV["Hartree"]["eV"]
         # energy = self.results["density"].grid.mp.asum(energy)
-        energy = fplib_GD.get_fp_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                                        lat, rxyz, types, znucl = np.array([3], int), cutoff = 6.5)
+        energy = fplib_GD.get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                                        lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
         return energy
 
     def get_forces(self, atoms=None):
@@ -162,9 +162,9 @@ class fp_GD_Calculator(object):
             rxyz = atoms.get_positions()
             types = fplib_GD.read_types('Li-mp-51.vasp')
             self.get_potential_energy(atoms)
-        forces = fplib_GD.get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
-                                        lat, rxyz, types, znucl = np.array([3], int), \
-                                        cutoff = 6.5, iter_max = 20, step_size = 1e-4)
+        forces = fplib_GD.get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                                        lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
+                                        iter_max = 20, step_size = 1e-4)
         return forces
 
 
