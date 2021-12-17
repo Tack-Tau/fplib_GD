@@ -740,6 +740,16 @@ def readvasp(vp):
 
 
 # @numba.jit()
+def read_types(vp):
+    types = []
+    for i in range(len(typt)):
+        types += [i+1]*typt[i]
+    types = np.array(types, int)
+    return types
+
+
+
+# @numba.jit()
 def get_rxyz_delta(rxyz):
     nat = len(rxyz)
     rxyz_delta = np.subtract( np.random.rand(nat, 3), 0.5*np.ones((nat, 3)) )
@@ -765,7 +775,9 @@ def get_fpdist(ntyp, types, fp1, fp2):
     return fpd
 
 # Calculate crystal atomic finger print energy
-def get_fp_energy(v1):
+def get_fp_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                  lat, rxyz, types, znucl = np.array([3], int), cutoff = 6.5):
+    '''
     ntyp = 1
     nx = 300
     lmax = 0
@@ -773,6 +785,7 @@ def get_fp_energy(v1):
     znucl = np.array([3], int)
     lat, rxyz, types = readvasp(v1)
     contract = False
+    '''
     fp_dist = 0.0
     fpdist_error = 0.0
     temp_num = 0.0
@@ -800,7 +813,10 @@ def get_fp_energy(v1):
     return fp_dist
 
 #Calculate crystal atomic finger print force and steepest descent update
-def get_fp_forces(v1):
+def get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                  lat, rxyz, types, znucl = np.array([3], int), \
+                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+    '''
     ntyp = 1
     nx = 300
     lmax = 0
@@ -812,6 +828,7 @@ def get_fp_forces(v1):
     iter_max = 20
     atol = 1e-6
     step_size = 1e-4
+    '''
     rxyz_new = rxyz.copy()
     # fp_dist = 0.0
     # fpdist_error = 0.0
@@ -889,23 +906,6 @@ def get_fp_forces(v1):
                                     2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
                 fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
                 
-                # Debugging
-                '''
-                print ("diff_D_fp_x = \n{0:s}".\
-                      format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False)))
-                print ("diff_D_fp_y = \n{0:s}".\
-                      format(np.array_str(diff_D_fp_y, precision=6, suppress_small=False)))
-                print ("diff_D_fp_z = \n{0:s}".\
-                      format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False), \
-                             np.array_str(diff_D_fp_y, precision=6, suppress_small=False), \
-                             np.array_str(diff_D_fp_z, precision=6, suppress_small=False)))
-                
-                print ( "diff_fp = \n{0:s}".\
-                      format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
-                print ( "del_fp = [{0:.6e}, {1:.6e}, {2:.6e}]".\
-                      format(del_fp[i_atom][0], del_fp[i_atom][1], del_fp[i_atom][2]) )
-                '''
-                
                 # print("del_fp = ", del_fp)
                 # rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
                 '''
@@ -937,3 +937,276 @@ def get_fp_forces(v1):
         '''
     
     return del_fp
+
+# Calculate forces using finite difference method
+def get_FD_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                  lat, rxyz, types, znucl = np.array([3], int), \
+                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+    '''
+    ntyp = 1
+    nx = 300
+    lmax = 0
+    cutoff = 6.5
+    znucl = np.array([3], int)
+    lat, rxyz, types = readvasp(v1)
+    contract = False
+    i_iter = 0
+    iter_max = 4
+    atol = 1.0e-6
+    step_size = 1e-4
+    const_factor = 1.0e+31
+    '''
+    del_fp_dist = 0.0
+    rxyz_left = rxyz.copy()
+    rxyz_new = rxyz.copy()
+    rxyz_right = rxyz.copy()
+    rxyz_delta = np.zeros_like(rxyz)
+    for i_iter in range(iter_max):
+        del_fp = np.zeros((len(rxyz_new), 3))
+        finite_diff = np.zeros((len(rxyz_new), 3))
+        sum_del_fp = np.zeros(3)
+        fp_dist_0 = 0.0
+        fp_dist_new = 0.0
+        fp_dist_del = 0.0
+        rxyz_delta = step_size*get_rxyz_delta(rxyz)
+        rxyz_new = np.add(rxyz_new, rxyz_delta)
+        for i_atom in range(len(rxyz)):
+            for j_atom in range(len(rxyz)):
+                for k in range(3):
+                    h = rxyz_delta[i_atom][k]
+                    # rxyz_left[i_atom][k] = rxyz_left[i_atom][k] - 2.0*h
+                    rxyz_right[i_atom][k] = rxyz_right[i_atom][k] + 2.0*h
+                    
+                    fp_iat_left = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_left, types, znucl, cutoff, i_atom)
+                    fp_jat_left = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_left, types, znucl, cutoff, j_atom)
+                    fp_iat = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_new, types, znucl, cutoff, i_atom)
+                    fp_jat = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_new, types, znucl, cutoff, j_atom)
+                    fp_iat_right = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_right, types, znucl, cutoff, i_atom)
+                    fp_jat_right = \
+                    get_fp(contract, ntyp, nx, lmax, lat, \
+                                              rxyz_right, types, znucl, cutoff, j_atom)
+                    
+                    fp_dist_left = get_fpdist(ntyp, types, fp_iat_left, fp_jat_left)
+                    fp_dist_right = get_fpdist(ntyp, types, fp_iat_right, fp_jat_right)
+                    finite_diff[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
+                    
+        
+        # sum_del_fp = np.sum(del_fp, axis=0)
+        sum_finite_diff = np.sum(finite_diff, axis=0)
+        for ii_atom in range(len(rxyz_new)):
+            # del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
+            finite_diff[ii_atom, :] = finite_diff[ii_atom, :] - sum_finite_diff/len(rxyz)
+        
+        '''
+        print ( "i_iter = {0:d} \nrxyz_new = \n{1:s}".\
+              format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+        print ( "Forces = \n{0:s}".\
+              format(np.array_str(del_fp, precision=6, suppress_small=False)) )
+        print ( "Finite difference = \n{0:s}".\
+              format(np.array_str(finite_diff, precision=6, suppress_small=False)) )
+        '''
+    
+    return finite_diff
+
+
+
+
+# Calculate numerical inegration using Simpson's rule
+def get_simpson_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                  lat, rxyz, types, znucl = np.array([3], int), \
+                  cutoff = 6.5, iter_max = 20, step_size = 1e-4):
+    '''
+    ntyp = 1
+    nx = 300
+    lmax = 0
+    cutoff = 6.5
+    znucl = np.array([3], int)
+    lat, rxyz, types = readvasp(v1)
+    contract = False
+    i_iter = 0
+    iter_max = 4
+    atol = 1.0e-6
+    step_size = 1e-4
+    const_factor = 1.0e+31
+    '''
+    del_fp_dist = 0.0
+    rxyz_left = rxyz.copy()
+    rxyz_new = rxyz.copy()
+    rxyz_right = rxyz.copy()
+    rxyz_delta = np.zeros_like(rxyz)
+    for i_iter in range(iter_max):
+        del_fp_left = np.zeros((len(rxyz_new), 3))
+        del_fp = np.zeros((len(rxyz_new), 3))
+        del_fp_right = np.zeros((len(rxyz_new), 3))
+        sum_del_fp_left = np.zeros(3)
+        sum_del_fp = np.zeros(3)
+        sum_del_fp_right = np.zeros(3)
+        fp_dist_0 = 0.0
+        fp_dist_new = 0.0
+        fp_dist_del = 0.0
+        rxyz_delta = step_size*get_rxyz_delta(rxyz)
+        rxyz_left = rxyz_new.copy()
+        rxyz_new = np.add(rxyz_new, rxyz_delta)
+        rxyz_right = np.add(rxyz_new, rxyz_delta)
+        for i_atom in range(len(rxyz)):
+            # del_fp = np.zeros(3)
+            for j_atom in range(len(rxyz)):
+                fp_iat_0 = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz, types, znucl, cutoff, i_atom)
+                fp_jat_0 = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz, types, znucl, cutoff, j_atom)
+                fp_iat_left = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_left, types, znucl, cutoff, i_atom)
+                fp_jat_left = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_left, types, znucl, cutoff, j_atom)
+                fp_iat = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_new, types, znucl, cutoff, i_atom)
+                fp_jat = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_new, types, znucl, cutoff, j_atom)
+                fp_iat_right = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_right, types, znucl, cutoff, i_atom)
+                fp_jat_right = \
+                get_fp(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_right, types, znucl, cutoff, j_atom)
+                D_fp_mat_iat_left = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_left, types, znucl, cutoff, i_atom)
+                D_fp_mat_jat_left = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_left, types, znucl, cutoff, j_atom)
+                D_fp_mat_iat = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_new, types, znucl, cutoff, i_atom)
+                D_fp_mat_jat = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_new, types, znucl, cutoff, j_atom)
+                D_fp_mat_iat_right = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_right, types, znucl, cutoff, i_atom)
+                D_fp_mat_jat_right = \
+                get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
+                                          rxyz_right, types, znucl, cutoff, j_atom)
+                diff_fp_left = fp_iat_left - fp_jat_left
+                diff_fp = fp_iat - fp_jat
+                diff_fp_right = fp_iat_right - fp_jat_right
+                # common_count, i_rxyz_sphere_1, i_rxyz_sphere_2 = \
+                # fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
+                #                                 znucl, cutoff, i_atom, j_atom)
+                iat_in_j_sphere_left, iat_j_left = get_common_sphere(ntyp, \
+                              nx, lmax, lat, rxyz_left, types, znucl, cutoff, i_atom, j_atom)
+                if iat_in_j_sphere_left:
+                    diff_D_fp_x_left = D_fp_mat_iat_left[i_atom, 0, :] - \
+                                       D_fp_mat_jat_left[iat_j_left, 0, :]
+                    diff_D_fp_y_left = D_fp_mat_iat_left[i_atom, 1, :] - \
+                                       D_fp_mat_jat_left[iat_j_left, 1, :]
+                    diff_D_fp_z_left = D_fp_mat_iat_left[i_atom, 2, :] - \
+                                       D_fp_mat_jat_left[iat_j_left, 2, :]
+                else:
+                    diff_D_fp_x_left = D_fp_mat_iat_left[i_atom, 0, :]
+                    diff_D_fp_y_left = D_fp_mat_iat_left[i_atom, 1, :]
+                    diff_D_fp_z_left = D_fp_mat_iat_left[i_atom, 2, :]
+                
+                iat_in_j_sphere, iat_j = get_common_sphere(ntyp, \
+                              nx, lmax, lat, rxyz_new, types, znucl, cutoff, i_atom, j_atom)
+                if iat_in_j_sphere:
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :] - D_fp_mat_jat[iat_j, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :] - D_fp_mat_jat[iat_j, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :] - D_fp_mat_jat[iat_j, 2, :]
+                else:
+                    diff_D_fp_x = D_fp_mat_iat[i_atom, 0, :]
+                    diff_D_fp_y = D_fp_mat_iat[i_atom, 1, :]
+                    diff_D_fp_z = D_fp_mat_iat[i_atom, 2, :]
+                
+                iat_in_j_sphere_right, iat_j_right = get_common_sphere(ntyp, \
+                              nx, lmax, lat, rxyz_right, types, znucl, cutoff, i_atom, j_atom)
+                if iat_in_j_sphere_right:
+                    diff_D_fp_x_right = D_fp_mat_iat_right[i_atom, 0, :] - \
+                                        D_fp_mat_jat_right[iat_j_right, 0, :]
+                    diff_D_fp_y_right = D_fp_mat_iat_right[i_atom, 1, :] - \
+                                        D_fp_mat_jat_right[iat_j_right, 1, :]
+                    diff_D_fp_z_right = D_fp_mat_iat_right[i_atom, 2, :] - \
+                                        D_fp_mat_jat_right[iat_j_right, 2, :]
+                else:
+                    diff_D_fp_x_right = D_fp_mat_iat_right[i_atom, 0, :]
+                    diff_D_fp_y_right = D_fp_mat_iat_right[i_atom, 1, :]
+                    diff_D_fp_z_right = D_fp_mat_iat_right[i_atom, 2, :]
+                
+                diff_D_fp_x_left = np.vstack( (np.array(diff_D_fp_x_left)[::-1], ) ).T
+                diff_D_fp_y_left = np.vstack( (np.array(diff_D_fp_y_left)[::-1], ) ).T
+                diff_D_fp_z_left = np.vstack( (np.array(diff_D_fp_z_left)[::-1], ) ).T
+                diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
+                diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
+                diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
+                diff_D_fp_x_right = np.vstack( (np.array(diff_D_fp_x_right)[::-1], ) ).T
+                diff_D_fp_y_right = np.vstack( (np.array(diff_D_fp_y_right)[::-1], ) ).T
+                diff_D_fp_z_right = np.vstack( (np.array(diff_D_fp_z_right)[::-1], ) ).T
+                
+                del_fp_left[i_atom][0] = del_fp_left[i_atom][0] + \
+                                    2.0*np.real( np.matmul( diff_fp_left.T, diff_D_fp_x_left ) )
+                del_fp_left[i_atom][1] = del_fp_left[i_atom][1] + \
+                                    2.0*np.real( np.matmul( diff_fp_left.T, diff_D_fp_y_left ) )
+                del_fp_left[i_atom][2] = del_fp_left[i_atom][2] + \
+                                    2.0*np.real( np.matmul( diff_fp_left.T, diff_D_fp_z_left ) )
+                del_fp[i_atom][0] = del_fp[i_atom][0] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_x ) )
+                del_fp[i_atom][1] = del_fp[i_atom][1] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
+                del_fp[i_atom][2] = del_fp[i_atom][2] + \
+                                    2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
+                del_fp_right[i_atom][0] = del_fp_right[i_atom][0] + \
+                                    2.0*np.real( np.matmul( diff_fp_right.T, diff_D_fp_x_right ) )
+                del_fp_right[i_atom][1] = del_fp_right[i_atom][1] + \
+                                    2.0*np.real( np.matmul( diff_fp_right.T, diff_D_fp_y_right ) )
+                del_fp_right[i_atom][2] = del_fp_right[i_atom][2] + \
+                                    2.0*np.real( np.matmul( diff_fp_right.T, diff_D_fp_z_right ) )
+                
+                fp_dist_0 = fp_dist_0 + get_fpdist(ntyp, types, fp_iat_0, fp_jat_0)
+                fp_dist_new = fp_dist_new + get_fpdist(ntyp, types, fp_iat, fp_jat)
+                fp_dist_del = fp_dist_new - fp_dist_0
+                del_fp_dist = del_fp_dist + np.vdot(rxyz_delta[i_atom], del_fp[i_atom])
+                
+                
+            # del_fp_dist = del_fp_dist + np.vdot(rxyz_delta[i_atom], del_fp[i_atom])
+        
+        sum_del_fp_left = np.sum(del_fp_left, axis=0)
+        sum_del_fp = np.sum(del_fp, axis=0)
+        sum_del_fp_right = np.sum(del_fp_right, axis=0)
+        
+        for ii_atom in range(len(rxyz_new)):
+            del_fp_left[ii_atom, :] = del_fp_left[ii_atom, :] - sum_del_fp_left/len(rxyz_new)
+            del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
+            del_fp_right[ii_atom, :] = del_fp_right[ii_atom, :] - sum_del_fp_right/len(rxyz_new)
+            del_fp_dist = del_fp_dist + \
+                          ( np.absolute( np.dot(rxyz_delta[ii_atom], del_fp_left[ii_atom]) ) + \
+                        4.0*np.absolute( np.dot(rxyz_delta[ii_atom], del_fp[ii_atom]) ) + \
+                            np.absolute( np.dot(rxyz_delta[ii_atom], del_fp_right[ii_atom]) ) )/3.0
+        
+        '''
+        print ( "i_iter = {0:d} \nrxyz_new = \n{1:s}".\
+              format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
+        print ( "Numerical integral = {0:.6e}".format(del_fp_dist) )
+        print ( "Forces = \n{0:s}".\
+              format(np.array_str(del_fp, precision=6, suppress_small=False)) )
+        print ( "Finger print energy difference = {0:s}".\
+              format(np.array_str(fp_dist_del, precision=6, suppress_small=False)) )
+        '''
+    
+    
+    return del_fp_dist
