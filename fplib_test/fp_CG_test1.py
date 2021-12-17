@@ -515,7 +515,7 @@ def test4_CG(v1):
     rxyz_delta = np.zeros_like(rxyz)
     for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
-        finite_def = np.zeros((len(rxyz_new), 3))
+        finite_diff = np.zeros((len(rxyz_new), 3))
         sum_del_fp = np.zeros(3)
         fp_dist_0 = 0.0
         fp_dist_new = 0.0
@@ -550,7 +550,7 @@ def test4_CG(v1):
                     
                     fp_dist_left = fplib_GD.get_fpdist(ntyp, types, fp_iat_left, fp_jat_left)
                     fp_dist_right = fplib_GD.get_fpdist(ntyp, types, fp_iat_right, fp_jat_right)
-                    finite_def[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
+                    finite_diff[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
                     
                     D_fp_mat_iat = \
                     fplib_GD.get_D_fp_mat(contract, ntyp, nx, lmax, lat, \
@@ -588,17 +588,17 @@ def test4_CG(v1):
         
         
         sum_del_fp = np.sum(del_fp, axis=0)
-        sum_finite_def = np.sum(finite_def, axis=0)
+        sum_finite_diff = np.sum(finite_diff, axis=0)
         for ii_atom in range(len(rxyz_new)):
             del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
-            finite_def[ii_atom, :] = finite_def[ii_atom, :] - sum_finite_def/len(rxyz)
+            finite_diff[ii_atom, :] = finite_diff[ii_atom, :] - sum_finite_diff/len(rxyz)
         
         print ( "i_iter = {0:d} \nrxyz_new = \n{1:s}".\
               format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
         print ( "Forces = \n{0:s}".\
               format(np.array_str(del_fp, precision=6, suppress_small=False)) )
         print ( "Finite difference = \n{0:s}".\
-              format(np.array_str(finite_def, precision=6, suppress_small=False)) )
+              format(np.array_str(finite_diff, precision=6, suppress_small=False)) )
     
     
     # return fp_dist
