@@ -2,18 +2,14 @@ import fplib_GD
 import rcovdata
 import sys
 import numpy as np
-import fplib_GD.readvasp as readvasp
-import ase.units as units
-from ase.atom import Atom
+# import fplib_GD.readvasp as readvasp
+# import ase.io
+# import ase.units as units
+from ase.atoms import Atoms
 from ase.cell import Cell
 # from ase.calculators.genericfileio import (CalculatorTemplate,
 #                                            GenericFileIOCalculator)
-from ase.calculators.calculator import BaseCalculator, FileIOCalculator
-
-# from dftpy.atom import Atom
-# from dftpy.base import DirectCell
-# from dftpy.constants import LEN_CONV, ENERGY_CONV, FORCE_CONV, STRESS_CONV
-# from dftpy.interface import ConfigParser, OptimizeDensityConf
+# from ase.calculators.calculator import BaseCalculator, FileIOCalculator
 
 '''
 class fp_GD_Template(CalculatorTemplate):
@@ -90,32 +86,27 @@ class fp_GD(GenericFileIOCalculator):
                          parameters=kwargs)
 '''
 
-class fp_GD_Calculator(BaseCalculator):
+class fp_GD_Calculator(object):
     """Fingerprint calculator for ase"""
     
-    implemented_properties: List[str] = []
-    'Properties calculator can handle (energy, forces, ...)'
-
-    # Placeholder object for deprecated arguments.  Let deprecated keywords
-    # default to _deprecated and then issue a warning if the user passed
-    # any other object (such as None).
-    _deprecated = object()
-
     def __init__(self, parameters=None):
         if parameters is None:
             parameters = {}
         self.parameters = dict(parameters)
         self.atoms = {}
-        self.results = None
+        self.energy = None
+        self.forces = None
+        # self.results = None
 
     
     
     def check_restart(self, atoms=None):
         if (
             self.atoms
-            and np.allclose(self.atoms["lattice"], atoms.cell[:])
-            and np.allclose(self.atoms["position"], atoms.get_scaled_positions())
-            and self.results is not None
+            and np.allclose(self.atoms.cell[:], atoms.cell[:])
+            and np.allclose(self.atoms.atoms.get_scaled_positions(), atoms.get_scaled_positions())
+            and self.energy is not None
+            and self.forces is not None
         ):
             return False
         else:
@@ -128,6 +119,7 @@ class fp_GD_Calculator(BaseCalculator):
             # pos = atoms.get_positions()
             # pos /= LEN_CONV['Bohr']['Angstrom']
             pos = atoms.get_scaled_positions()
+            '''
             if self.results is not None and len(self.atoms) > 0 :
                 pseudo = self.results["pseudo"]
                 if np.allclose(self.atoms["lattice"], atoms.cell[:]):
@@ -145,7 +137,7 @@ class fp_GD_Calculator(BaseCalculator):
             cell = DirectCell(lattice)
             ions = Atom(Z=Z, pos=pos, cell=cell, basis="Crystal")
             # ions.restart()
-            '''
+            
             if self.results is not None and self.config["MATH"]["reuse"]:
                 config, others = ConfigParser(self.config, ions=ions, rhoini=self.results["density"], pseudo=pseudo, grid=grid, mp = self.mp)
                 results = OptimizeDensityConf(config, others["struct"], others["E_v_Evaluator"], others["nr2"])
@@ -154,20 +146,25 @@ class fp_GD_Calculator(BaseCalculator):
                 results = OptimizeDensityConf(config, others["struct"], others["E_v_Evaluator"], others["nr2"])
             self.results = results
             '''
-        energy = self.results["energypotential"]["TOTAL"].energy * ENERGY_CONV["Hartree"]["eV"]
-        energy = self.results["density"].grid.mp.asum(energy)
+        # energy = self.results["energypotential"]["TOTAL"].energy * ENERGY_CONV["Hartree"]["eV"]
+        # energy = self.results["density"].grid.mp.asum(energy)
+        energy = fplib_GD.get_fp_energy(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                                        lat, rxyz, types, znucl = np.array([3], int), cutoff = 6.5)
         return energy
 
-    def get_forces(self, atoms):
+    def get_forces(self, atoms=None):
         if self.check_restart(atoms):
             # if 'Force' not in self.config['JOB']['calctype'] :
                 # self.config['JOB']['calctype'] += ' Force'
             self.get_potential_energy(atoms)
-        return self.results["forces"]["TOTAL"] * FORCE_CONV["Ha/Bohr"]["eV/A"]
+        forces = fplib_GD.get_fp_forces(contract = False, ntyp = 1, nx = 300, lmax = 0, \
+                                        lat, rxyz, types, znucl = np.array([3], int), \
+                                        cutoff = 6.5, iter_max = 20, step_size = 1e-4)
+        return forces
 
 
 
-    def get_stress(self, atoms):
+    def get_stress(self, atoms=None):
         pass
         '''
         if self.check_restart(atoms):
