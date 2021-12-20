@@ -18,7 +18,8 @@ atoms = ase.io.read('.'+'/'+'Li-mp-51.vasp')
 trajfile = 'opt.traj'
 
 calc = fp_GD_Calculator
-atoms.set_calculator(calc)
+# atoms.set_calculator(calc)
+atoms.calc = calc
 
 ############################## Relaxation type ##############################
 '''

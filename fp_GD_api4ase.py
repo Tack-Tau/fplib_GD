@@ -89,10 +89,10 @@ class fp_GD(GenericFileIOCalculator):
 class fp_GD_Calculator(object):
     """Fingerprint calculator for ase"""
     
-    def __init__(self, parameters=None):
-        if parameters is None:
-            parameters = {}
-        self.parameters = dict(parameters)
+    def __init__(self, restart=None, atoms=None, **kwargs):
+        # if parameters is None:
+        #     parameters = {}
+        # self.parameters = dict(parameters)
         self.atoms = {}
         self.energy = None
         self.forces = None
@@ -100,7 +100,7 @@ class fp_GD_Calculator(object):
 
     
     
-    def check_restart(self, atoms=None):
+    def check_restart(self, atoms=None, **kwargs):
         if (
             self.atoms
             and np.allclose(self.atoms.cell[:], atoms.cell[:])
@@ -156,7 +156,7 @@ class fp_GD_Calculator(object):
                                         lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
         return energy
 
-    def get_forces(self, atoms=None):
+    def get_forces(self, atoms=None, **kwargs):
         if self.check_restart(atoms):
             lat = atoms.cell[:]
             rxyz = atoms.get_positions()
@@ -169,7 +169,7 @@ class fp_GD_Calculator(object):
 
 
 
-    def get_stress(self, atoms=None):
+    def get_stress(self, atoms=None, **kwargs):
         pass
         '''
         if self.check_restart(atoms):
