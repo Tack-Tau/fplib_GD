@@ -4,7 +4,7 @@ import numpy as np
 import fplib_GD
 import ase.io
 from ase import units
-from ase.calculators.interface import Calculator
+# from ase.calculators.calculator import Calculator
 # from ase.lattice.cubic import FaceCenteredCubic
 from ase.optimize import BFGS, LBFGS, FIRE
 from ase.optimize.sciopt import SciPyFminBFGS, SciPyFminCG
