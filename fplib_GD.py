@@ -934,8 +934,6 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
         sum_del_fp = np.sum(del_fp, axis=0)
         for ii_atom in range(len(rxyz_new)):
             del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
-            rxyz_new[ii_atom] = rxyz_new[ii_atom] - \
-                                step_size*del_fp[ii_atom, :]/np.linalg.norm(del_fp[ii_atom, :])
         '''
         print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
               format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
