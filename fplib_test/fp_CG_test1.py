@@ -25,7 +25,7 @@ def test1_CG(v1):
     # fpdist_temp_sum = 0.0
     # fpdsit_temp_num = 0.0
     
-    for i_iter in range(iter_max+1):
+    for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         sum_del_fp = np.zeros(3)
         fp_dist = 0.0
@@ -155,7 +155,7 @@ def test1_CG(v1):
                 '''
                 if max(del_fp) < atol:
                     print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
-                          format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
+                          format(i_iter+1, np.array_str(rxyz, precision=6, suppress_small=False)))
                     return
                     # with np.printoptions(precision=3, suppress=True):
                     # sys.exit("Reached user setting tolerance, program ended")
