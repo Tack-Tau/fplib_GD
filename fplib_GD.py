@@ -741,6 +741,15 @@ def readvasp(vp):
 
 # @numba.jit()
 def read_types(vp):
+    buff = []
+    with open(vp) as f:
+        for line in f:
+            buff.append(line.split())
+    try:
+        typt = np.array(buff[5], int)
+    except:
+        del(buff[5])
+        typt = np.array(buff[5], int)
     types = []
     for i in range(len(typt)):
         types += [i+1]*typt[i]
@@ -815,7 +824,7 @@ def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
 #Calculate crystal atomic finger print force and steepest descent update
 def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                   lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                  iter_max = 20, step_size = 1e-4):
+                  iter_max = 1, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
@@ -835,7 +844,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     # fpdist_temp_sum = 0.0
     # fpdsit_temp_num = 0.0
     
-    for i_iter in range(iter_max+1):
+    for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         sum_del_fp = np.zeros(3)
         fp_dist = 0.0
@@ -904,14 +913,14 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                     2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
                 del_fp[i_atom][2] = del_fp[i_atom][2] + \
                                     2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
-                fp_dist = fp_dist + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                fp_dist = fp_dist + get_fpdist(ntyp, types, fp_iat, fp_jat)
                 
                 # print("del_fp = ", del_fp)
                 # rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
                 '''
                 if max(del_fp) < atol:
                     print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
-                          format(i_iter, np.array_str(rxyz, precision=6, suppress_small=False)))
+                          format(i_iter+1, np.array_str(rxyz, precision=6, suppress_small=False)))
                     return
                     # with np.printoptions(precision=3, suppress=True):
                     # sys.exit("Reached user setting tolerance, program ended")
@@ -941,7 +950,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
 # Calculate forces using finite difference method
 def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                   lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                  iter_max = 20, step_size = 1e-4):
+                  iter_max = 1, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
@@ -1024,7 +1033,7 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
 # Calculate numerical inegration using Simpson's rule
 def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                        lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                       iter_max = 20, step_size = 1e-4):
+                       iter_max = 1, step_size = 1e-4):
     '''
     ntyp = 1
     nx = 300
