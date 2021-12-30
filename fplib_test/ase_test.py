@@ -28,7 +28,7 @@ Ref :
     https ://wiki.fysik.dtu.dk/ase/ase/constraints.html
 '''
 af = atoms
-# af = StrainFilter(atoms)
+af = StrainFilter(atoms)
 # af = UnitCellFilter(atoms)
 ############################## Relaxation method ##############################
 # opt = BFGS(af, maxstep = 1.e-3, trajectory = trajfile)
@@ -38,7 +38,7 @@ opt = LBFGS(af, maxstep = 1.e-3, trajectory = trajfile, memory = 10, use_line_se
 # opt = SciPyFminCG(af, trajectory = trajfile)
 # opt = SciPyFminBFGS(af, trajectory = trajfile)
 
-opt.run(fmax = 1.e-8)
+opt.run(fmax = 1.e-4)
 
 traj = Trajectory(trajfile)
 ase.io.write('opt.vasp', traj[-1], direct = True, long_format=True, vasp5 = True)

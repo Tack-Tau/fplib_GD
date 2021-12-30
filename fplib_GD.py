@@ -1217,3 +1217,66 @@ def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     
     
     return del_fp_dist
+
+# Calculate Cauchy stress tensor using finite difference
+def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
+                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
+                  iter_max = 1, step_size = 1e-4):
+    '''
+    ntyp = 1
+    nx = 300
+    lmax = 0
+    cutoff = 6.5
+    znucl = np.array([3], int)
+    lat, rxyz, types = readvasp(v1)
+    contract = False
+    i_iter = 0
+    iter_max = 4
+    atol = 1.0e-6
+    step_size = 1e-4
+    const_factor = 1.0e+31
+    '''
+    rxyz = np.dot(pos, lat)
+    fp_energy = 0.0
+    fp_energy_new = 0.0
+    fp_energy_left = 0.0
+    fp_energy_right = 0.0
+    # cell_vol = 0.0
+    # lat_new = lat.copy()
+    # lat_left = lat.copy()
+    # lat_right = lat.copy()
+    rxyz = np.dot(pos, lat)
+    # rxyz_new = np.dot(pos, lat_new)
+    # rxyz_left = np.dot(pos, lat_left)
+    # rxyz_right = np.dot(pos, lat_right)
+    rxyz_delta = np.zeros_like(rxyz)
+    for i_iter in range(iter_max):
+        cell_vol = np.inner( lat[0], np.cross( lat[1], lat[2] ) )
+        stress = np.zeros((3, 3))
+        fp_energy = get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
+                                        lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
+        strain_delta = step_size*np.random.randint(1, 999, (3, 3))/999
+        for m in range(3):
+            for n in range(3):
+                h = strain_delta[m][n]
+                strain = np.ones((3, 3))
+                strain_new = np.ones((3, 3))
+                strain_left = np.ones((3, 3))
+                strain_right = np.ones((3, 3))
+                strain_left[m][n] = strain[m][n] - h
+                strain_right[m][n] = strain[m][n] + h
+                lat_left = np.multiply(lat, strain_left)
+                lat_right = np.multiply(lat, strain_right)
+                rxyz_left = np.dot(pos, lat_left)
+                rxyz_right = np.dot(pos, lat_right)
+                fp_energy_left = get_fp_energy(lat_left, rxyz_left, types, contract = False, \
+                                               ntyp = 1, nx = 300, lmax = 0, znucl = \
+                                               np.array([3], int), cutoff = 6.5)
+                fp_energy_right = get_fp_energy(lat_right, rxyz_right, types, contract = False, \
+                                                ntyp = 1, nx = 300, lmax = 0, znucl = \
+                                                np.array([3], int), cutoff = 6.5)
+                stress[m][n] = (fp_energy_right - fp_energy_left)/(2.0*h*cell_vol)
+        #################
+        
+    #################
+    return stress
