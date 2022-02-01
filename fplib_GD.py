@@ -1275,7 +1275,7 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
                 fp_energy_right = get_fp_energy(lat_right, rxyz_right, types, contract = False, \
                                                 ntyp = 1, nx = 300, lmax = 0, znucl = \
                                                 np.array([3], int), cutoff = 6.5)
-                stress[m][n] = (fp_energy_right - fp_energy_left)/(2.0*h*cell_vol)
+                stress[m][n] = - (fp_energy_right - fp_energy_left)/(2.0*h*cell_vol)
         #################
         
     #################
