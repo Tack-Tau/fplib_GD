@@ -1255,18 +1255,18 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
         stress = np.zeros((3, 3))
         fp_energy = get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                         lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
-        strain_delta = step_size*np.random.randint(1, 999, (3, 3))/999
+        strain_delta = step_size*np.random.randint(1, 9999, (3, 3))/9999
+        rxyz_ratio = np.diag(np.ones(3))
+        rxyz_ratio_new = rxyz_ratio.copy()
         for m in range(3):
             for n in range(3):
                 h = strain_delta[m][n]
-                strain = np.ones((3, 3))
-                strain_new = np.ones((3, 3))
-                strain_left = np.ones((3, 3))
-                strain_right = np.ones((3, 3))
-                strain_left[m][n] = strain[m][n] - h
-                strain_right[m][n] = strain[m][n] + h
-                lat_left = np.multiply(lat, strain_left)
-                lat_right = np.multiply(lat, strain_right)
+                rxyz_ratio_left = np.diag(np.ones(3))
+                rxyz_ratio_right = np.diag(np.ones(3))
+                rxyz_ratio_left[m][n] = rxyz_ratio[m][n] - h
+                rxyz_ratio_right[m][n] = rxyz_ratio[m][n] + h
+                lat_left = np.multiply(lat, rxyz_ratio_left)
+                lat_right = np.multiply(lat, rxyz_ratio_right)
                 rxyz_left = np.dot(pos, lat_left)
                 rxyz_right = np.dot(pos, lat_right)
                 fp_energy_left = get_fp_energy(lat_left, rxyz_left, types, contract = False, \
