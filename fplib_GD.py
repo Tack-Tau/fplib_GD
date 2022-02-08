@@ -847,7 +847,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         sum_del_fp = np.zeros(3)
-        fp_dist = 0.0
+        # fp_dist = 0.0
         for i_atom in range(len(rxyz_new)):
             # del_fp = np.zeros(3)
             # temp_del_fp = np.zeros(3)
@@ -913,7 +913,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                     2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
                 del_fp[i_atom][2] = del_fp[i_atom][2] + \
                                     2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
-                fp_dist = fp_dist + get_fpdist(ntyp, types, fp_iat, fp_jat)
+                # fp_dist = fp_dist + get_fpdist(ntyp, types, fp_iat, fp_jat)
                 
                 # print("del_fp = ", del_fp)
                 # rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
