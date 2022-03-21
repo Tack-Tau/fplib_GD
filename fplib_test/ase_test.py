@@ -24,21 +24,22 @@ atoms.calc = calc
 ############################## Relaxation type ##############################
 '''
 Ref : 
-    https ://wiki.fysik.dtu.dk/ase/ase/optimize.html#module-optimize
-    https ://wiki.fysik.dtu.dk/ase/ase/constraints.html
+    https://wiki.fysik.dtu.dk/ase/ase/optimize.html#module-optimize
+    https://wiki.fysik.dtu.dk/ase/ase/constraints.html
 '''
 af = atoms
-af = StrainFilter(atoms)
+# af = StrainFilter(atoms)
 # af = UnitCellFilter(atoms)
+print(af.get_forces())
 ############################## Relaxation method ##############################
 # opt = BFGS(af, maxstep = 1.e-3, trajectory = trajfile)
 # opt = FIRE(af, maxstep = 1.e-3, trajectory = trajfile)
-opt = LBFGS(af, maxstep = 1.e-3, trajectory = trajfile, memory = 10, use_line_search = True)
+opt = LBFGS(af, maxstep = 1.e-1, trajectory = trajfile, memory = 10, use_line_search = True)
 # opt = LBFGS(af, maxstep = 1.e-3, trajectory = trajfile, memory = 10, use_line_search = False)
 # opt = SciPyFminCG(af, trajectory = trajfile)
 # opt = SciPyFminBFGS(af, trajectory = trajfile)
 
-opt.run(fmax = 1.e-4)
+opt.run(fmax = 1.e-10)
 
 traj = Trajectory(trajfile)
 ase.io.write('opt.vasp', traj[-1], direct = True, long_format=True, vasp5 = True)

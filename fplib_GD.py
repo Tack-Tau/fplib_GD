@@ -30,7 +30,7 @@ def get_gom(lseg, rxyz, rcov, amp):
                     * np.exp(-1.0*d2*r) * amp[iat] * amp[jat]
                 
                 # <s_i | p_j>
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
+                sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
                 stv = np.sqrt(8.0) * rcov[jat] * r * sji
                 om[4*iat][4*jat+1] = stv * d[0] * amp[iat] * amp[jat]
                 om[4*iat][4*jat+2] = stv * d[1] * amp[iat] * amp[jat]
@@ -98,7 +98,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                     d = rxyz[iat] - rxyz[jat]
                     d2 = np.vdot(d, d)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                    sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
+                    sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[x] * sji * amp[iat] * amp[jat]
