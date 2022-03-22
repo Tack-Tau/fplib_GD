@@ -32,10 +32,10 @@ af = atoms
 # af = UnitCellFilter(atoms)
 print(af.get_forces())
 ############################## Relaxation method ##############################
-# opt = BFGS(af, maxstep = 1.e-3, trajectory = trajfile)
-# opt = FIRE(af, maxstep = 1.e-3, trajectory = trajfile)
-opt = LBFGS(af, maxstep = 1.e-1, trajectory = trajfile, memory = 10, use_line_search = True)
-# opt = LBFGS(af, maxstep = 1.e-3, trajectory = trajfile, memory = 10, use_line_search = False)
+opt = BFGS(af, maxstep = 1.e-1, trajectory = trajfile)
+# opt = FIRE(af, maxstep = 1.e-1, trajectory = trajfile)
+# opt = LBFGS(af, maxstep = 1.e-1, trajectory = trajfile, memory = 10, use_line_search = True)
+# opt = LBFGS(af, maxstep = 1.e-1, trajectory = trajfile, memory = 10, use_line_search = False)
 # opt = SciPyFminCG(af, trajectory = trajfile)
 # opt = SciPyFminBFGS(af, trajectory = trajfile)
 
