@@ -73,8 +73,11 @@ def kron_delta(i,j):
 
 
 # @numba.jit()
-def get_D_gom(lseg, rxyz, rcov, amp, D_n):
+def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
     # s orbital only lseg == 1
+    NC = 3
+    wc = cutoff / np.sqrt(2.* NC)
+    fc = 1.0 / (2.0 * NC * wc**2)
     nat = len(rxyz)    
     if lseg == 1:
         D_om = np.zeros((3, nat, nat))
@@ -87,7 +90,9 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                     sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]
+                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]              \
+                                   -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * sji \
+                                   * amp[iat] * amp[jat]
                 
     else:
         # for both s and p orbitals
@@ -101,7 +106,9 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                     sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]
+                                   (2.0*r) * d[x] * sji * amp[iat] * amp[jat]                  \
+                                   -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * sji     \
+                                   * amp[iat] * amp[jat]
                 
                     # Derivative of <s_i | p_j>
                     stv = np.sqrt(8.0) * rcov[jat] * r * sji
@@ -109,7 +116,9 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                         D_om[x][4*iat][4*jat+i_sp+1] = \
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_sp) - \
-                                                     np.dot( d[x], d[i_sp] ) * 2.0*r  )
+                                                     np.dot( d[x], d[i_sp] ) * 2.0*r ) \
+                        -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        * stv * d[i_sp] * amp[iat] * amp[jat]
 
                     # Derivative of <p_i | s_j>
                     stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
@@ -117,7 +126,9 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                         D_om[x][4*iat+i_ps+1][4*jat] = \
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_ps) - \
-                                                     np.dot( d[x], d[i_ps] ) * 2.0*r )
+                                                     np.dot( d[x], d[i_ps] ) * 2.0*r ) \
+                        -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        * stv * d[i_ps] * amp[iat] * amp[jat]
 
                     # Derivative of <p_i | p_j>
                     stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
@@ -129,7 +140,10 @@ def get_D_gom(lseg, rxyz, rcov, amp, D_n):
                             ( kron_delta(x, j_pp) - 2.0 * r * d[i_pp] * d[j_pp] ) + \
                             ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                             stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] + \
-                                                         kron_delta(x, j_pp) * d[i_pp] )
+                                                         kron_delta(x, j_pp) * d[i_pp] )  \
+                            -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * stv \
+                            ( np.dot(d[i_pp], d[j_pp]) - - kron_delta(i_pp, j_pp) * 0.5/r ) \
+                            * amp[iat] * amp[jat]
                 
     return D_om
 
@@ -165,7 +179,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     N_vec = len(sorted_Varr_om[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     # D_fp = np.zeros((nx*lseg, 1))
-    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, D_n)
+    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n)
     if x == 0:
         Dx_om = D_om[0, :, :]
         for i in range(N_vec):
