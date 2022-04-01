@@ -6,4 +6,5 @@ non-convex.py
 __pycache__
 *.pyc
 *.vasp
+*.traj
 log
