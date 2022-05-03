@@ -152,15 +152,15 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
 
 
 # @numba.jit()
-def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, icenter):
+def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat):
     if lmax == 0:
         lseg = 1
         l = 1
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icenter)
+    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
+                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     lamda_om = np.real(lamda_om)
@@ -211,14 +211,14 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
 
 
 # @numba.jit()
-def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icenter):
+def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     if lmax == 0:
         lseg = 1
         l = 1
     else:
         lseg = 4
         l = 2
-    # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+    # amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
     #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
@@ -229,7 +229,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icen
     for i in range(3*nat):
         D_n = i // 3
         x = i % 3
-        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, icenter)
+        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
         for j in range(len(D_fp)):
             D_fp_mat[x][j][D_n] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
@@ -240,7 +240,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icen
 
 
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
-    amp_j, n_sphere_j, rxyz_sphere_j, rcov_sphere_j = \
+    amp_j, n_sphere_j, icenter_j, rxyz_sphere_j, rcov_sphere_j = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
     i_sphere_count = 0
     nat_j_sphere = len(rxyz_sphere_j)
@@ -258,9 +258,9 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
 
 '''
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
-    amp_1, n_sphere_1, rxyz_sphere_1, rcov_sphere_1 = \
+    amp_1, n_sphere_1, icenter_1, rxyz_sphere_1, rcov_sphere_1 = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    amp_2, n_sphere_2, rxyz_sphere_2, rcov_sphere_2 = \
+    amp_2, n_sphere_2, icenter_1, rxyz_sphere_2, rcov_sphere_2 = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
     nat_1 = len(rxyz_sphere_1)
     nat_2 = len(rxyz_sphere_2)
@@ -644,9 +644,10 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                             amp.append((1.0-d2*fc)**NC)
                             # print (1.0-d2*fc)**NC
                             rxyz_sphere.append([xj, yj, zj])
-                            rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2]) 
+                            rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2])
                             if jat == iat and ix == 0 and iy == 0 and iz == 0:
                                 ityp_sphere = 0
+                                icenter = n_sphere - 1
                             else:
                                 ityp_sphere = types[jat]
                             '''
@@ -659,7 +660,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                 else:
                                     ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
-                             '''
+                            '''
         n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
     # for n_iter in range(nx-n_sphere+1):
@@ -670,7 +671,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     # print ("n_sphere", n_sphere)
     # print ("rxyz_sphere", rxyz_sphere)
     # print ("rcov_sphere", rcov_sphere)
-    return amp, n_sphere, rxyz_sphere, rcov_sphere
+    return amp, n_sphere, icenter, rxyz_sphere, rcov_sphere
 
 
 
@@ -684,7 +685,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         l = 2
     # lfp = []
     sfp = []
-    amp, n_sphere, rxyz_sphere, rcov_sphere = \
+    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # full overlap matrix
     nid = lseg * n_sphere
