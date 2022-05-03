@@ -73,7 +73,7 @@ def kron_delta(i,j):
 
 
 # @numba.jit()
-def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
+def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
     # s orbital only lseg == 1
     NC = 3
     wc = cutoff / np.sqrt(2.* NC)
@@ -85,14 +85,15 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
             for iat in range(nat):
                 for jat in range(nat):
                     d = rxyz[iat] - rxyz[jat]
+                    dnc = rxyz[D_n] - rxyz[icenter]
                     d2 = np.vdot(d, d)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                     sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[x] * sji * amp[iat] * amp[jat]              \
-                                   -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * sji \
-                                   * amp[iat] * amp[jat]
+                                   -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * sji \
+                                   * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 
     else:
         # for both s and p orbitals
@@ -101,14 +102,15 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
             for iat in range(nat):
                 for jat in range(nat):
                     d = rxyz[iat] - rxyz[jat]
+                    dnc = rxyz[D_n] - rxyz[icenter]
                     d2 = np.vdot(d, d)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                     sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[x] * sji * amp[iat] * amp[jat]                  \
-                                   -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * sji     \
-                                   * amp[iat] * amp[jat]
+                                   -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * sji     \
+                                   * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 
                     # Derivative of <s_i | p_j>
                     stv = np.sqrt(8.0) * rcov[jat] * r * sji
@@ -117,8 +119,8 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_sp) - \
                                                      np.dot( d[x], d[i_sp] ) * 2.0*r ) \
-                        -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) \
-                        * stv * d[i_sp] * amp[iat] * amp[jat]
+                        -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        * stv * d[i_sp] * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
 
                     # Derivative of <p_i | s_j>
                     stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
@@ -127,8 +129,8 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_ps) - \
                                                      np.dot( d[x], d[i_ps] ) * 2.0*r ) \
-                        -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) \
-                        * stv * d[i_ps] * amp[iat] * amp[jat]
+                        -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        * stv * d[i_ps] * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
 
                     # Derivative of <p_i | p_j>
                     stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
@@ -141,16 +143,16 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
                             ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                             stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] + \
                                                          kron_delta(x, j_pp) * d[i_pp] )  \
-                            -2.0 * NC * fc * d[x] * (1.0 - d2 * fc)**(NC - 1) * stv \
-                            ( np.dot(d[i_pp], d[j_pp]) - - kron_delta(i_pp, j_pp) * 0.5/r ) \
-                            * amp[iat] * amp[jat]
+                            -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * stv * \
+                            ( np.dot(d[i_pp], d[j_pp]) - kron_delta(i_pp, j_pp) * 0.5/r ) \
+                            * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 
     return D_om
 
 
 
 # @numba.jit()
-def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat):
+def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, icenter):
     if lmax == 0:
         lseg = 1
         l = 1
@@ -158,7 +160,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
         lseg = 4
         l = 2
     amp, n_sphere, rxyz_sphere, rcov_sphere = \
-                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icenter)
     om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
     lamda_om = np.real(lamda_om)
@@ -179,7 +181,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     N_vec = len(sorted_Varr_om[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     # D_fp = np.zeros((nx*lseg, 1))
-    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n)
+    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n, icenter)
     if x == 0:
         Dx_om = D_om[0, :, :]
         for i in range(N_vec):
@@ -209,7 +211,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
 
 
 # @numba.jit()
-def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
+def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, icenter):
     if lmax == 0:
         lseg = 1
         l = 1
@@ -227,7 +229,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     for i in range(3*nat):
         D_n = i // 3
         x = i % 3
-        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
+        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, icenter)
         for j in range(len(D_fp)):
             D_fp_mat[x][j][D_n] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
@@ -694,6 +696,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     for i in range(len(val)):
         # fp0[i] = val[i]
         fp0[i][0] = val[i]
+    fp0 = fp0/np.linalg.norm(fp0)
     # lfp = sorted(fp0)
     lfp = fp0[ fp0[ : , 0].argsort(), : ]
     # lfp.append(sorted(fp0))
@@ -795,15 +798,29 @@ def get_rxyz_delta(rxyz):
 
 
 # @numba.jit()
-def get_fpdist(ntyp, types, fp1, fp2):
-    # lenfp, = np.shape(fp1)
-    # nat, lenfp = np.shape(fp1)
-    # fpd = 0.0
-    tfpd = fp1 - fp2
-    # fpd = np.sqrt( np.dot(tfpd, tfpd)/lenfp )
-    # fpd = np.dot(tfpd, tfpd)/lenfp
-    fpd = np.matmul(tfpd.T, tfpd)
-    return fpd
+def get_fpdist(ntyp, types, fp1, fp2, mx = False):
+    nat, lenfp = np.shape(fp1)
+    fpd = 0.0
+    for ityp in range(ntyp):
+        itype = ityp + 1
+        MX = np.zeros((nat, nat))
+        for iat in range(nat):
+            if types[iat] == itype:
+                for jat in range(nat):
+                    if types[jat] == itype:
+                        tfpd = fp1[iat] - fp2[jat]
+                        MX[iat][jat] = np.sqrt(np.vdot(tfpd, tfpd))
+
+        row_ind, col_ind = linear_sum_assignment(MX)
+        # print(row_ind, col_ind)
+        total = MX[row_ind, col_ind].sum()
+        fpd += total
+
+    fpd = fpd / nat
+    if mx:
+        return fpd, col_ind
+    else:
+        return fpd
 
 # Calculate crystal atomic finger print energy
 def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
@@ -833,7 +850,8 @@ def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                         fp_jat = \
                         get_fp(contract, ntyp, nx, lmax, lat, \
                                           rxyz, types, znucl, cutoff, j_atom)
-                        temp_num = fpdist_error + get_fpdist(ntyp, types, fp_iat, fp_jat)
+                        dfp_ij = fp_iat - fp_jat
+                        temp_num = fpdist_error + np.matmul(dfp_ij.T, dfp_ij)
                         temp_sum = fp_dist + temp_num
                         accum_error = temp_num - (temp_sum - fp_dist)
                         fp_dist = temp_sum
