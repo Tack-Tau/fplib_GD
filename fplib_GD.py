@@ -87,12 +87,13 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
                     d = rxyz[iat] - rxyz[jat]
                     dnc = rxyz[D_n] - rxyz[icenter]
                     d2 = np.vdot(d, d)
+                    dnc2 = np.vdot(dnc, dnc)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                     sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[x] * sji * amp[iat] * amp[jat]              \
-                                   -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * sji \
+                                   -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) * sji \
                                    * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 
     else:
@@ -104,12 +105,13 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
                     d = rxyz[iat] - rxyz[jat]
                     dnc = rxyz[D_n] - rxyz[icenter]
                     d2 = np.vdot(d, d)
+                    dnc2 = np.vdot(dnc, dnc)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                     sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
                     # Derivative of <s_i | s_j>
                     D_om[x][4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                                    (2.0*r) * d[x] * sji * amp[iat] * amp[jat]                  \
-                                   -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * sji     \
+                                   -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) * sji     \
                                    * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 
                     # Derivative of <s_i | p_j>
@@ -119,7 +121,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_sp) - \
                                                      np.dot( d[x], d[i_sp] ) * 2.0*r ) \
-                        -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) \
                         * stv * d[i_sp] * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
 
                     # Derivative of <p_i | s_j>
@@ -129,7 +131,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
                         ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                         stv * amp[iat] * amp[jat] * ( kron_delta(x, i_ps) - \
                                                      np.dot( d[x], d[i_ps] ) * 2.0*r ) \
-                        -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) \
+                        -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) \
                         * stv * d[i_ps] * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
 
                     # Derivative of <p_i | p_j>
@@ -143,7 +145,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
                             ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                             stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] + \
                                                          kron_delta(x, j_pp) * d[i_pp] )  \
-                            -2.0 * NC * fc * dnc[x] * (1.0 - d2 * fc)**(NC - 1) * stv * \
+                            -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) * stv * \
                             ( np.dot(d[i_pp], d[j_pp]) - kron_delta(i_pp, j_pp) * 0.5/r ) \
                             * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) - kron_delta(jat, D_n) )
                 

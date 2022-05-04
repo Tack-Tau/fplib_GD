@@ -115,15 +115,13 @@ def test1_CG(v1):
                     print ("diff_D_fp_y = \n{0:s}".\
                           format(np.array_str(diff_D_fp_y, precision=6, suppress_small=False)))
                     print ("diff_D_fp_z = \n{0:s}".\
-                          format(np.array_str(diff_D_fp_x, precision=6, suppress_small=False), \
-                                 np.array_str(diff_D_fp_y, precision=6, suppress_small=False), \
-                                 np.array_str(diff_D_fp_z, precision=6, suppress_small=False)))
-                    '''
+                          format(np.array_str(diff_D_fp_z, precision=6, suppress_small=False)))
+                    
                     print ( "diff_fp = \n{0:s}".\
                           format(np.array_str(diff_fp, precision=6, suppress_small=False)) )
                     print ( "del_fp = [{0:.6e}, {1:.6e}, {2:.6e}]".\
                           format(del_fp[i_atom][0], del_fp[i_atom][1], del_fp[i_atom][2]) )
-                    
+                    '''
 
 
 
@@ -358,9 +356,9 @@ def test3_CG(v1):
                     # common_count, i_rxyz_sphere_1, i_rxyz_sphere_2 = \
                     # fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
                     #                                 znucl, cutoff, i_atom, j_atom)
-                    kat_in_i_sphere_left, kat_i_left = get_common_sphere(ntyp, \
+                    kat_in_i_sphere_left, kat_i_left = fplib_GD.get_common_sphere(ntyp, \
                                       nx, lmax, lat, rxyz_left, types, znucl, cutoff, k_atom, i_atom)
-                    kat_in_j_sphere_left, kat_j_left = get_common_sphere(ntyp, \
+                    kat_in_j_sphere_left, kat_j_left = fplib_GD.get_common_sphere(ntyp, \
                                   nx, lmax, lat, rxyz_left, types, znucl, cutoff, k_atom, j_atom)
                     if kat_in_i_sphere_left == True and kat_in_j_sphere_left == True:
                         diff_D_fp_x_left = D_fp_mat_iat_left[0, :, kat_i_left] \
@@ -382,9 +380,9 @@ def test3_CG(v1):
                         diff_D_fp_y_left = np.zeros_like(D_fp_mat_jat_left[1, :, kat_j_left])
                         diff_D_fp_z_left = np.zeros_like(D_fp_mat_jat_left[2, :, kat_j_left])
 
-                    kat_in_i_sphere, kat_i = get_common_sphere(ntyp, \
+                    kat_in_i_sphere, kat_i = fplib_GD.get_common_sphere(ntyp, \
                                       nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, i_atom)
-                    kat_in_j_sphere, kat_j = get_common_sphere(ntyp, \
+                    kat_in_j_sphere, kat_j = fplib_GD.get_common_sphere(ntyp, \
                                   nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, j_atom)
                     if kat_in_i_sphere == True and kat_in_j_sphere == True:
                         diff_D_fp_x = D_fp_mat_iat[0, :, kat_i] - D_fp_mat_jat[0, :, kat_j]
@@ -403,10 +401,10 @@ def test3_CG(v1):
                         diff_D_fp_y = np.zeros_like(D_fp_mat_jat[1, :, kat_j])
                         diff_D_fp_z = np.zeros_like(D_fp_mat_jat[2, :, kat_j])
 
-                    kat_in_i_sphere_right, kat_i_right = get_common_sphere(ntyp, \
+                    kat_in_i_sphere_right, kat_i_right = fplib_GD.get_common_sphere(ntyp, \
                                       nx, lmax, lat, rxyz_right, types, znucl, cutoff, k_atom,\
                                                                            i_atom)
-                    kat_in_j_sphere_right, kat_j_right = get_common_sphere(ntyp, \
+                    kat_in_j_sphere_right, kat_j_right = fplib_GD.get_common_sphere(ntyp, \
                                   nx, lmax, lat, rxyz_right, types, znucl, cutoff, k_atom, j_atom)
                     if kat_in_i_sphere_right == True and kat_in_j_sphere_right == True:
                         diff_D_fp_x_right = D_fp_mat_iat_right[0, :, kat_i_right] \
@@ -594,8 +592,10 @@ def test4_CG(v1):
                         fplib_GD.get_fp(contract, ntyp, nx, lmax, lat, \
                                                   rxyz_right, types, znucl, cutoff, j_atom)
 
-                        fp_dist_left = fplib_GD.get_fpdist(ntyp, types, fp_iat_left, fp_jat_left)
-                        fp_dist_right = fplib_GD.get_fpdist(ntyp, types, fp_iat_right, fp_jat_right)
+                        dfp_ij_left = fp_iat_left - fp_jat_left
+                        dfp_ij_right = fp_iat_right - fp_jat_right
+                        fp_dist_left = np.vdot(dfp_ij_left, dfp_ij_left)
+                        fp_dist_right = np.vdot(dfp_ij_right, dfp_ij_right)
                         finite_diff[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
 
                         D_fp_mat_iat = \
@@ -607,9 +607,9 @@ def test4_CG(v1):
 
                         diff_fp = fp_iat - fp_jat
 
-                        kat_in_i_sphere, kat_i = get_common_sphere(ntyp, \
+                        kat_in_i_sphere, kat_i = fplib_GD.get_common_sphere(ntyp, \
                                       nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, i_atom)
-                        kat_in_j_sphere, kat_j = get_common_sphere(ntyp, \
+                        kat_in_j_sphere, kat_j = fplib_GD.get_common_sphere(ntyp, \
                                       nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, j_atom)
                         if kat_in_i_sphere == True and kat_in_j_sphere == True:
                             diff_D_fp_x = D_fp_mat_iat[0, :, kat_i] - D_fp_mat_jat[0, :, kat_j]
@@ -665,7 +665,7 @@ def test4_CG(v1):
 if __name__ == "__main__":
     args = sys.argv
     v1 = args[1]
-    test1_CG(v1)
+    # test1_CG(v1)
     # test2_CG(v1)
     # test3_CG(v1)
-    # test4_CG(v1)
+    test4_CG(v1)
