@@ -103,6 +103,7 @@ class fp_GD_Calculator(Calculator):
 
     def get_potential_energy(self, atoms=None, **kwargs):
         if self.check_restart(atoms):
+            # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             rxyz = atoms.get_positions()
             types = fplib_GD.read_types('Li-mp-51.vasp')
@@ -115,10 +116,11 @@ class fp_GD_Calculator(Calculator):
 
     def get_forces(self, atoms=None, **kwargs):
         if self.check_restart(atoms):
+            # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             rxyz = atoms.get_positions()
             types = fplib_GD.read_types('Li-mp-51.vasp')
-            self.get_potential_energy(atoms)
+            # self.get_potential_energy(atoms)
         forces = fplib_GD.get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 100, \
                                         lmax = 0, znucl = np.array([3], int), cutoff = 6.0, \
                                         iter_max = 1, step_size = 1e-4)
@@ -128,10 +130,11 @@ class fp_GD_Calculator(Calculator):
 
     def get_stress(self, atoms=None, **kwargs):
         if self.check_restart(atoms):
+            # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             pos = atoms.get_scaled_positions()
             types = fplib_GD.read_types('Li-mp-51.vasp')
-            self.get_potential_energy(atoms)
+            # self.get_potential_energy(atoms)
         # stress = fplib_GD.get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 100, \
         #                                 lmax = 0, znucl = np.array([3], int), cutoff = 6.0, \
         #                                 iter_max = 1, step_size = 1e-4)

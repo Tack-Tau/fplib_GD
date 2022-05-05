@@ -220,13 +220,13 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     else:
         lseg = 4
         l = 2
-    # amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
-    #               get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
+    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
+                  get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
     # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
-    nat = len(rxyz)
+    nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
     for i in range(3*nat):
         D_n = i // 3
@@ -249,12 +249,16 @@ def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat)
     iat_in_j_sphere = False
     rxyz_list = rxyz.tolist()
     rxyz_sphere_j_list = rxyz_sphere_j.tolist()
+    iat_j = 0
     for j in range(nat_j_sphere):
+        # d = rxyz[iat] - rxyz_sphere_j[j]
+        # d2 = np.dot(d, d)
+        # cutoff2 = cutoff**2
+        # if d2 <= cutoff2:
         if rxyz_list[iat] == rxyz_sphere_j_list[j]:
             iat_in_j_sphere = True
-            return iat_in_j_sphere, j
-        else:
-            return iat_in_j_sphere, j
+            iat_j = j
+    return iat_in_j_sphere, iat_j
 
 
 
@@ -699,11 +703,18 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     for i in range(len(val)):
         # fp0[i] = val[i]
         fp0[i][0] = val[i]
-    fp0 = fp0/np.linalg.norm(fp0)
+    fp0_norm = np.linalg.norm(fp0)
+    fp0 = np.divide(fp0, fp0_norm)
     # lfp = sorted(fp0)
     lfp = fp0[ fp0[ : , 0].argsort(), : ]
     # lfp.append(sorted(fp0))
-    pvec = np.real(np.transpose(vec)[0])
+    # pvec = np.real(np.transpose(vec)[0])
+    vectmp = np.transpose(vec)
+    vecs = []
+    for i in range(len(vectmp)):
+        vecs.append(vectmp[len(vectmp)-1-i])
+
+    pvec = vecs
     # contracted overlap matrix
     if contract:
         nids = l * (ntyp + 1)
@@ -917,6 +928,10 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                   nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, i_atom)
                     kat_in_j_sphere, kat_j = get_common_sphere(ntyp, \
                                   nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, j_atom)
+                    print("kat_in_i_sphere=", kat_in_i_sphere, "kat_i=", kat_i)
+                    print("kat_in_j_sphere=", kat_in_j_sphere, "kat_j=", kat_j)
+                    print("fp_shape=", fp_iat.shape)
+                    print("D_fp_mat_shape=", D_fp_mat_iat.shape)
                     if kat_in_i_sphere == True and kat_in_j_sphere == True:
                         diff_D_fp_x = D_fp_mat_iat[0, :, kat_i] - D_fp_mat_jat[0, :, kat_j]
                         diff_D_fp_y = D_fp_mat_iat[1, :, kat_i] - D_fp_mat_jat[1, :, kat_j]
