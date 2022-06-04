@@ -193,10 +193,10 @@ def test1_CG(v1):
         for iat in range(len(rxyz)):
             del_fp = np.zeros(3)
             for jat in range(len(rxyz)):
-                # amp, n_sphere, rxyz_sphere, rcov_sphere = \
+                # amp, sphere_id_list, rxyz_sphere, rcov_sphere = \
                 # fplib_GD.get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
                 # print ("amp", amp)
-                # print ("n_sphere", n_sphere)
+                # print ("n_sphere", len(rxyz_sphere))
                 # print ("rxyz_sphere", rxyz_sphere)
                 # print ("rcov_sphere", rcov_sphere)
                 # D_n_i = x*iat
@@ -225,7 +225,7 @@ def test1_CG(v1):
         rxyz[iat][x] = rxyz[iat][x] - step_size*del_fp[x]
         # print ("3 rxyz", rxyz)
     
-    # print ("n_sphere", n_sphere)
+    # print ("n_sphere", len(rxyz_sphere))
     # print ("length of amp", len(amp))
     # print ("length of rcov_sphere", len(rcov_sphere))
     # print ("size of rxyz_sphere", rxyz_sphere.shape)

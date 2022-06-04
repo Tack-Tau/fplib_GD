@@ -161,7 +161,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     lamda_om, Varr_om = np.linalg.eig(om)
@@ -212,6 +212,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     return D_fp
 
 
+
 # @numba.jit()
 def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     if lmax == 0:
@@ -220,7 +221,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     else:
         lseg = 4
         l = 2
-    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # lamda_om, Varr_om = np.linalg.eig(om)
@@ -228,12 +229,15 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # N_vec = len(Varr_om[0])
     nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
-    for i in range(3*nat):
-        D_n = i // 3
-        x = i % 3
-        D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, iat)
-        for j in range(len(D_fp)):
-            D_fp_mat[x][j][D_n] = D_fp[j][0]
+    for i in range(nat):
+        if sphere_id_list[i][0:3] == [0, 0, 0]:
+            # D_n = sphere_id_list[i][3]
+            D_n = i
+            for x in range(3):
+                D_fp = get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, \
+                                x, D_n, iat)
+                for j in range(len(D_fp)):
+                    D_fp_mat[x][j][D_n] = D_fp[j][0]
             # D_fp_mat[x, :, D_n] = D_fp
             # Another way to compute D_fp_mat is through looping np.column_stack((a,b))
     # print("D_fp_mat = \n{0:s}".format(np.array_str(D_fp_mat, precision=6, suppress_small=False)) )
@@ -242,340 +246,18 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
 
 
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
-    amp_j, n_sphere_j, icenter_j, rxyz_sphere_j, rcov_sphere_j = \
+    amp_j, sphere_id_list_j, icenter_j, rxyz_sphere_j, rcov_sphere_j = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
-    i_sphere_count = 0
     nat_j_sphere = len(rxyz_sphere_j)
     iat_in_j_sphere = False
-    rxyz_list = rxyz.tolist()
-    rxyz_sphere_j_list = rxyz_sphere_j.tolist()
     iat_j = 0
     for j in range(nat_j_sphere):
-        # d = rxyz[iat] - rxyz_sphere_j[j]
-        # d2 = np.dot(d, d)
-        # cutoff2 = cutoff**2
-        # if d2 <= cutoff2:
-        if rxyz_list[iat] == rxyz_sphere_j_list[j]:
+        if sphere_id_list_j[j] == [0, 0, 0, iat]:
             iat_in_j_sphere = True
             iat_j = j
+            break
     return iat_in_j_sphere, iat_j
 
-
-
-'''
-def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
-    amp_1, n_sphere_1, icenter_1, rxyz_sphere_1, rcov_sphere_1 = \
-                get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    amp_2, n_sphere_2, icenter_1, rxyz_sphere_2, rcov_sphere_2 = \
-                get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
-    nat_1 = len(rxyz_sphere_1)
-    nat_2 = len(rxyz_sphere_2)
-    rxyz_sphere_1 = rxyz_sphere_1.tolist()
-    rxyz_sphere_2 = rxyz_sphere_2.tolist()
-    i_rxyz_sphere_1 = []
-    i_rxyz_sphere_2 = []
-    common_count = 0
-    for i in range(nat_1):
-        for j in range(nat_2):
-            if rxyz_sphere_1[i] == rxyz_sphere_2[j]:
-                common_count = common_count + 1
-                i_rxyz_sphere_1.append(i)
-                i_rxyz_sphere_2.append(j)
-    # print("{0:d} common atoms for {1:d}th atom and {2:d}th atom".format(common_count, iat+1, jat+1))
-    return common_count, i_rxyz_sphere_1, i_rxyz_sphere_2
-'''    
-
-
-
-# Previous get_D_om
-'''
-# @numba.jit()
-def get_Dx_gom(lseg, rxyz, rcov, amp, D_n):
-    # s orbital only lseg == 1
-    nat = len(rxyz)    
-    if lseg == 1:
-        Dx_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dx_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                
-    else:
-        # for both s and p orbitals
-        Dx_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dx_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[0] * sji * amp[iat] * amp[jat]
-                
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dx_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dx_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[0], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dx_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[0], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dx_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dx_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[0] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                
-    return Dx_om
-
-
-
-# @numba.jit()
-def get_Dy_gom(lseg, rxyz, rcov, amp, D_n):
-    # s orbital only lseg == 1
-    nat = len(rxyz)    
-    if lseg == 1:
-        Dy_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dy_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                
-    else:
-        # for both s and p orbitals
-        Dy_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
-                # Derivative of <s_i | s_j>
-                Dy_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[1] * sji * amp[iat] * amp[jat]
-                
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dy_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dy_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[1], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dy_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[1], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dy_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                Dy_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[1] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                
-    return Dy_om
-
-
-
-# @numba.jit()
-def get_Dz_gom(lseg, rxyz, rcov, amp, D_n):
-    # s orbital only lseg == 1
-    nat = len(rxyz)    
-    if lseg == 1:
-        Dz_om = np.zeros((nat, nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 * np.exp(-1.0*d2*r)
-                # Derivative of <s_i | s_j>
-                Dz_om[iat][jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                
-    else:
-        # for both s and p orbitals
-        Dz_om = np.zeros((4*nat, 4*nat))
-        for iat in range(nat):
-            for jat in range(nat):
-                d = rxyz[iat] - rxyz[jat]
-                d2 = np.vdot(d, d)
-                r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
-                sji = np.sqrt(4.0*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
-                # Derivative of <s_i | s_j>
-                Dz_om[4*iat][4*jat] = -( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                                   (2.0*r) * d[2] * sji * amp[iat] * amp[jat]
-                
-                # Derivative of <s_i | p_j>
-                stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                Dz_om[4*iat][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | s_j>
-                stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                Dz_om[4*iat+1][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[0] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat+2][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * (                       0.0 - stv * np.dot( d[2], d[1] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-                Dz_om[4*iat+3][4*jat] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                * ( stv * amp[iat] * amp[jat] - stv * np.dot( d[2], d[2] ) * 2.0*r \
-                                                                 * amp[iat] * amp[jat] )
-
-                # Derivative of <p_i | p_j>
-                stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                Dz_om[4*iat+1][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[0] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+1][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+1][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[0] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[0]) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[1] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+2][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[1] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (0.0  + d[1]) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+1] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[0]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[0] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+2] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (0.0 - 2.0 * r * d[2] * d[1]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[1] +  0.0) \
-                                                                     * amp[iat] * amp[jat]
-                Dz_om[4*iat+3][4*jat+3] = ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) \
-                       * d[2] * stv * (1.0 - 2.0 * r * d[2] * d[2]) * amp[iat] * amp[jat] + \
-                ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * stv * (d[2] + d[2]) \
-                                                                     * amp[iat] * amp[jat]
-                
-    return Dz_om
-
-'''
 
 
 #################################################################################
@@ -606,6 +288,7 @@ def get_fpdist_nonperiodic(fp1, fp2):
     return np.sqrt(np.vdot(d, d))
 
 
+
 # @numba.jit()
 def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     if lmax == 0:
@@ -620,17 +303,15 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     fc = 1.0 / (2.0 * NC * wc**2)
     nat = len(rxyz)
     cutoff2 = cutoff**2 
-    n_sphere_list = []
+    # n_sphere_list = []
     # print ("init iat = ", iat)
-    # if iat > (nat-1):
-        # print ("max iat = ", iat)
-        # sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
-        # return amp, n_sphere, rxyz_sphere, rcov_sphere
-    # else:
-        # print ("else iat = ", iat)
-    if iat <= (nat-1):
+    if iat > (nat-1):
+        print ("max iat = ", iat)
+        sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
+    else:
         rxyz_sphere = []
         rcov_sphere = []
+        sphere_id_list = []
         ind = [0] * (lseg * nx)
         amp = []
         xi, yi, zi = rxyz[iat]
@@ -646,17 +327,18 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                         if d2 <= cutoff2:
                             n_sphere += 1
                             if n_sphere > nx:
-                                print ("FP WARNING: the cutoff is too large.")
+                                sys.exit("FP WARNING: the cutoff is too large.")
                             amp.append((1.0-d2*fc)**NC)
                             # print (1.0-d2*fc)**NC
                             rxyz_sphere.append([xj, yj, zj])
                             rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2])
-                            if jat == iat and ix == 0 and iy == 0 and iz == 0:
+                            sphere_id_list.append([ix, iy, iz, jat])
+                            if [ix, iy, iz] == [0, 0, 0] and jat == iat:
                                 ityp_sphere = 0
                                 icenter = n_sphere - 1
                             else:
                                 ityp_sphere = types[jat]
-                            '''
+                            
                             for il in range(lseg):
                                 if il == 0:
                                     # print len(ind)
@@ -666,8 +348,8 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                 else:
                                     ind[il+lseg*(n_sphere-1)] = ityp_sphere * l + 1
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
-                            '''
-        n_sphere_list.append(n_sphere)
+                            
+        # n_sphere_list.append(n_sphere)
         rxyz_sphere = np.array(rxyz_sphere, float)
     # for n_iter in range(nx-n_sphere+1):
         # rxyz_sphere.append([0.0, 0.0, 0.0])
@@ -677,7 +359,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     # print ("n_sphere", n_sphere)
     # print ("rxyz_sphere", rxyz_sphere)
     # print ("rcov_sphere", rcov_sphere)
-    return amp, n_sphere, icenter, rxyz_sphere, rcov_sphere
+    return amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere
 
 
 
@@ -691,9 +373,10 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         l = 2
     # lfp = []
     sfp = []
-    amp, n_sphere, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # full overlap matrix
+    n_sphere = len(rxyz_sphere)
     nid = lseg * n_sphere
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     val, vec = np.linalg.eig(gom)
@@ -732,9 +415,6 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         # sfp.append(sorted(sfp0))
         sfp = np.linalg.eigvals(omx)
         sfp.append(sorted(sfp))
-
-    # print ("n_sphere_min", min(n_sphere_list))
-    # print ("n_shpere_max", max(n_sphere_list)) 
 
     if contract:
         # sfp = np.array(sfp, float)
