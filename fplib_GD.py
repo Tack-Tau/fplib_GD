@@ -63,6 +63,25 @@ def get_gom(lseg, rxyz, rcov, amp):
 
 
 # @numba.jit()
+def check_symmetric(A, rtol = 1e-05, atol = 1e-08):
+    return np.allclose(A, A.T, rtol = rtol, atol = atol)
+
+
+
+# @numba.jit()
+def check_pos_def(A):
+    if np.array_equal(A, A.T):
+        try:
+            np.linalg.cholesky(A)
+            return True
+        except np.linalg.LinAlgError:
+            return False
+    else:
+        return False
+
+
+
+# @numba.jit()
 def kron_delta(i,j):
     if i == j:
         m = 1.0
@@ -164,8 +183,9 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    lamda_om, Varr_om = np.linalg.eig(om)
-    lamda_om = np.real(lamda_om)
+    if check_symmetric(om) and check_pos_def(om):
+        lamda_om, Varr_om = np.linalg.eigh(om)
+        # lamda_om = np.real(lamda_om)
     lamda_om_list = lamda_om.tolist()
     null_Varr = np.vstack( (np.zeros_like(Varr_om[:, 0]), ) ).T
     for n in range(nx*lseg - len(lamda_om_list)):
@@ -224,8 +244,9 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    # lamda_om, Varr_om = np.linalg.eig(om)
-    # lamda_om = np.real(lamda_om)
+    # if check_symmetric(om) and check_pos_def(om):
+        # lamda_om, Varr_om = np.linalg.eigh(om)
+        # # lamda_om = np.real(lamda_om)
     # N_vec = len(Varr_om[0])
     nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
@@ -275,7 +296,8 @@ def get_fp_nonperiodic(rxyz, znucls):
     for x in znucls:
         rcov.append(rcovdata.rcovdata[x][2])
     gom = get_gom(1, rxyz, rcov, amp)
-    fp = np.linalg.eigvals(gom)
+    if check_symmetric(gom) and check_pos_def(gom):
+        fp = np.linalg.eigvalsh(gom)
     fp = sorted(fp)
     fp = np.array(fp, float)
     return fp
@@ -379,8 +401,9 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     n_sphere = len(rxyz_sphere)
     nid = lseg * n_sphere
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    val, vec = np.linalg.eig(gom)
-    val = np.real(val)
+    if check_symmetric(gom) and check_pos_def(gom):
+        val, vec = np.linalg.eigh(gom)
+        # val = np.real(val)
     # fp0 = np.zeros(nx*lseg)
     fp0 = np.zeros((nx*lseg, 1))
     for i in range(len(val)):
@@ -411,9 +434,9 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         #         if abs(omx[i][j] - omx[j][i]) > 1e-6:
         #             print ("ERROR", i, j, omx[i][j], omx[j][i])
         # print omx
-        # sfp0 = np.linalg.eigvals(omx)
+        # sfp0 = np.linalg.eigvalsh(omx)
         # sfp.append(sorted(sfp0))
-        sfp = np.linalg.eigvals(omx)
+        sfp = np.linalg.eigvalsh(omx)
         sfp.append(sorted(sfp))
 
     if contract:
@@ -428,7 +451,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
 def get_ixyz(lat, cutoff):
     lat2 = np.matmul(lat, np.transpose(lat))
     # print lat2
-    val = np.linalg.eigvals(lat2)
+    val = np.linalg.eigvalsh(lat2)
     # print (vec)
     ixyz = int(np.sqrt(1.0/max(val))*cutoff) + 1
     return ixyz
