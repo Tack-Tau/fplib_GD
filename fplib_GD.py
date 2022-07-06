@@ -70,9 +70,11 @@ def check_symmetric(A, rtol = 1e-05, atol = 1e-08):
 
 # @numba.jit()
 def check_pos_def(A):
-    if np.array_equal(A, A.T):
+    eps = np.finfo(float).eps
+    B = A + eps*np.identity(len(A))
+    if np.array_equal(B, B.T):
         try:
-            np.linalg.cholesky(A)
+            np.linalg.cholesky(B)
             return True
         except np.linalg.LinAlgError:
             return False
