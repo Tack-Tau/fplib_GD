@@ -200,7 +200,8 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     
     # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
     lamda_Varr_om = np.vstack((lamda_om, Varr_om))
-    sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()]
+    # sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()]
+    sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()[::-1]]
     sorted_Varr_om = sorted_lamda_Varr_om[1:, :]
     
     N_vec = len(sorted_Varr_om[0])
@@ -301,7 +302,7 @@ def get_fp_nonperiodic(rxyz, znucls):
     gom = get_gom(1, rxyz, rcov, amp)
     if check_symmetric(gom) and check_pos_def(gom):
         fp = np.linalg.eigvalsh(gom)
-    fp = sorted(fp)
+    fp = sorted(fp, reverse = True)
     fp = np.array(fp, float)
     return fp
 
@@ -405,25 +406,25 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     nid = lseg * n_sphere
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     if check_symmetric(gom) and check_pos_def(gom):
-        val, vec = np.linalg.eig(gom)
-        val = np.real(val)
+        vals, vecs = np.linalg.eigh(gom)
+        # vals = np.real(vals)
     # fp0 = np.zeros(nx*lseg)
     fp0 = np.zeros((nx*lseg, 1))
-    for i in range(len(val)):
+    for i in range(len(vals)):
         # fp0[i] = val[i]
-        fp0[i][0] = val[i]
+        fp0[i][0] = vals[i]
     fp0_norm = np.linalg.norm(fp0)
     fp0 = np.divide(fp0, fp0_norm)
-    # lfp = sorted(fp0)
-    lfp = fp0[ fp0[ : , 0].argsort(), : ]
-    # lfp.append(sorted(fp0))
+    # lfp = sorted(fp0, reverse = True)
+    # lfp = fp0[ fp0[ : , 0].argsort(), : ]
+    lfp = fp0[ fp0[ : , 0].argsort()[::-1], : ]
+    # lfp.append(sorted(fp0, reverse = True))
     # pvec = np.real(np.transpose(vec)[0])
-    vectmp = np.transpose(vec)
-    vecs = []
+    vectmp = np.transpose(vecs)
+    pvecs = []
     for i in range(len(vectmp)):
-        vecs.append(vectmp[len(vectmp)-1-i])
-
-    pvec = vecs
+        pvecs.append(vectmp[len(vectmp)-1-i])
+    
     # contracted overlap matrix
     if contract:
         nids = l * (ntyp + 1)
@@ -438,9 +439,9 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         #             print ("ERROR", i, j, omx[i][j], omx[j][i])
         # print omx
         # sfp0 = np.linalg.eigvalsh(omx)
-        # sfp.append(sorted(sfp0))
+        # sfp.append(sorted(sfp0, reverse = True))
         sfp = np.linalg.eigvalsh(omx)
-        sfp.append(sorted(sfp))
+        sfp.append(sorted(sfp, reverse = True))
 
     if contract:
         # sfp = np.array(sfp, float)
