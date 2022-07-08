@@ -1036,7 +1036,10 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
         stress = np.zeros((3, 3))
         fp_energy = get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                         lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
-        strain_delta = step_size*np.random.randint(1, 9999, (3, 3))/9999
+        strain_delta_tmp = step_size*np.random.randint(1, 9999, (3, 3))/9999
+        # Make strain tensor symmetric
+        strain_delta = 0.5*(strain_delta_tmp + strain_delta_tmp.T - \
+                            np.diag(np.diag(strain_delta_tmp))) 
         rxyz_ratio = np.diag(np.ones(3))
         rxyz_ratio_new = rxyz_ratio.copy()
         for m in range(3):
@@ -1046,8 +1049,8 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
                 rxyz_ratio_right = np.diag(np.ones(3))
                 rxyz_ratio_left[m][n] = rxyz_ratio[m][n] - h
                 rxyz_ratio_right[m][n] = rxyz_ratio[m][n] + h
-                lat_left = np.multiply(lat, rxyz_ratio_left)
-                lat_right = np.multiply(lat, rxyz_ratio_right)
+                lat_left = np.multiply(lat, rxyz_ratio_left.T)
+                lat_right = np.multiply(lat, rxyz_ratio_right.T)
                 rxyz_left = np.dot(pos, lat_left)
                 rxyz_right = np.dot(pos, lat_right)
                 fp_energy_left = get_fp_energy(lat_left, rxyz_left, types, contract = False, \
@@ -1060,4 +1063,5 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
         #################
         
     #################
+    stress = stress.flat[[0, 4, 8, 5, 2, 1]]
     return stress
