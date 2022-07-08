@@ -184,18 +184,19 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
         l = 2
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    if check_symmetric(om) and check_pos_def(om):
-        lamda_om, Varr_om = np.linalg.eigh(om)
-        # lamda_om = np.real(lamda_om)
-    lamda_om_list = lamda_om.tolist()
-    null_Varr = np.vstack( (np.zeros_like(Varr_om[:, 0]), ) ).T
-    for n in range(nx*lseg - len(lamda_om_list)):
-        lamda_om_list.append(0.0)
-        Varr_om_new = np.hstack((Varr_om, null_Varr))
-        Varr_om = Varr_om_new.copy()
+    gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    if check_symmetric(gom) and check_pos_def(gom):
+        lamda_gom, Varr_gom = np.linalg.eig(gom)
+        lamda_gom = np.real(lamda_gom)
+    # Adding null vectors to eigenvector matrix Varr_gom corresponding to zero eigenvalues in fp
+    lamda_gom_list = lamda_gom.tolist()
+    null_Varr = np.vstack( (np.zeros_like(Varr_gom[:, 0]), ) ).T
+    for n in range(nx*lseg - len(lamda_gom_list)):
+        lamda_gom_list.append(0.0)
+        Varr_gom_new = np.hstack((Varr_gom, null_Varr))
+        Varr_gom = Varr_gom_new.copy()
         
-    lamda_om = np.array(lamda_om_list, float)
+    lamda_gom = np.array(lamda_gom_list, float)
     
     # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
     lamda_Varr_om = np.vstack((lamda_om, Varr_om))
@@ -245,11 +246,11 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
         l = 2
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    # om = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    # if check_symmetric(om) and check_pos_def(om):
-        # lamda_om, Varr_om = np.linalg.eigh(om)
-        # # lamda_om = np.real(lamda_om)
-    # N_vec = len(Varr_om[0])
+    # gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    # if check_symmetric(gom) and check_pos_def(gom):
+        # lamda_gom, Varr_gom = np.linalg.eig(gom)
+        # lamda_gom = np.real(lamda_gom)
+    # N_vec = len(Varr_gom[0])
     nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
     for i in range(nat):
@@ -404,8 +405,8 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     nid = lseg * n_sphere
     gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     if check_symmetric(gom) and check_pos_def(gom):
-        val, vec = np.linalg.eigh(gom)
-        # val = np.real(val)
+        val, vec = np.linalg.eig(gom)
+        val = np.real(val)
     # fp0 = np.zeros(nx*lseg)
     fp0 = np.zeros((nx*lseg, 1))
     for i in range(len(val)):
