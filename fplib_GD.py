@@ -11,54 +11,79 @@ def get_gom(lseg, rxyz, rcov, amp):
     nat = len(rxyz)    
     if lseg == 1:
         om = np.zeros((nat, nat))
+        mamp = np.zeros((nat, nat))
         for iat in range(nat):
             for jat in range(nat):
                 d = rxyz[iat] - rxyz[jat]
                 d2 = np.vdot(d, d)
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 om[iat][jat] = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 \
-                    * np.exp(-1.0*d2*r) * amp[iat] * amp[jat]
+                    * np.exp(-1.0*d2*r)
+                mamp[iat][jat] = amp[iat] * amp[jat]
     else:
         # for both s and p orbitals
         om = np.zeros((4*nat, 4*nat))
+        mamp = np.zeros((4*nat, 4*nat))
         for iat in range(nat):
             for jat in range(nat):
                 d = rxyz[iat] - rxyz[jat]
                 d2 = np.vdot(d, d)
                 r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
                 om[4*iat][4*jat] = np.sqrt( 4.0*r*(rcov[iat]*rcov[jat]) )**3 \
-                    * np.exp(-1.0*d2*r) * amp[iat] * amp[jat]
+                    * np.exp(-1.0*d2*r)
+                mamp[iat][jat] = amp[iat] * amp[jat]
                 
                 # <s_i | p_j>
                 sji = np.sqrt(4.0*r*rcov[iat]*rcov[jat])**3 * np.exp(-1*d2*r)
                 stv = np.sqrt(8.0) * rcov[jat] * r * sji
-                om[4*iat][4*jat+1] = stv * d[0] * amp[iat] * amp[jat]
-                om[4*iat][4*jat+2] = stv * d[1] * amp[iat] * amp[jat]
-                om[4*iat][4*jat+3] = stv * d[2] * amp[iat] * amp[jat]
+                om[4*iat][4*jat+1] = stv * d[0]
+                om[4*iat][4*jat+2] = stv * d[1]
+                om[4*iat][4*jat+3] = stv * d[2]
+                                
+                mamp[4*iat][4*jat+1] = amp[iat] * amp[jat]
+                mamp[4*iat][4*jat+2] = amp[iat] * amp[jat]
+                mamp[4*iat][4*jat+3] = amp[iat] * amp[jat]
 
                 # <p_i | s_j> 
                 stv = np.sqrt(8.0) * rcov[iat] * r * sji * -1.0
-                om[4*iat+1][4*jat] = stv * d[0] * amp[iat] * amp[jat]
-                om[4*iat+2][4*jat] = stv * d[1] * amp[iat] * amp[jat]
-                om[4*iat+3][4*jat] = stv * d[2] * amp[iat] * amp[jat]
+                om[4*iat+1][4*jat] = stv * d[0]
+                om[4*iat+2][4*jat] = stv * d[1]
+                om[4*iat+3][4*jat] = stv * d[2]
+                
+                mamp[4*iat+1][4*jat] = amp[iat] * amp[jat]
+                mamp[4*iat+2][4*jat] = amp[iat] * amp[jat]
+                mamp[4*iat+3][4*jat] = amp[iat] * amp[jat]
 
                 # <p_i | p_j>
                 stv = -8.0 * rcov[iat] * rcov[jat] * r * r * sji
-                om[4*iat+1][4*jat+1] = stv * (d[0] * d[0] - 0.5/r) * amp[iat] * amp[jat]
-                om[4*iat+1][4*jat+2] = stv * (d[1] * d[0]        ) * amp[iat] * amp[jat]
-                om[4*iat+1][4*jat+3] = stv * (d[2] * d[0]        ) * amp[iat] * amp[jat]
-                om[4*iat+2][4*jat+1] = stv * (d[0] * d[1]        ) * amp[iat] * amp[jat]
-                om[4*iat+2][4*jat+2] = stv * (d[1] * d[1] - 0.5/r) * amp[iat] * amp[jat]
-                om[4*iat+2][4*jat+3] = stv * (d[2] * d[1]        ) * amp[iat] * amp[jat]
-                om[4*iat+3][4*jat+1] = stv * (d[0] * d[2]        ) * amp[iat] * amp[jat]
-                om[4*iat+3][4*jat+2] = stv * (d[1] * d[2]        ) * amp[iat] * amp[jat]
-                om[4*iat+3][4*jat+3] = stv * (d[2] * d[2] - 0.5/r) * amp[iat] * amp[jat]
+                om[4*iat+1][4*jat+1] = stv * (d[0] * d[0] - 0.5/r)
+                om[4*iat+1][4*jat+2] = stv * (d[1] * d[0]        )
+                om[4*iat+1][4*jat+3] = stv * (d[2] * d[0]        )
+                om[4*iat+2][4*jat+1] = stv * (d[0] * d[1]        )
+                om[4*iat+2][4*jat+2] = stv * (d[1] * d[1] - 0.5/r)
+                om[4*iat+2][4*jat+3] = stv * (d[2] * d[1]        )
+                om[4*iat+3][4*jat+1] = stv * (d[0] * d[2]        )
+                om[4*iat+3][4*jat+2] = stv * (d[1] * d[2]        )
+                om[4*iat+3][4*jat+3] = stv * (d[2] * d[2] - 0.5/r)
+                
+                mamp[4*iat+1][4*jat+1] = amp[iat] * amp[jat]
+                mamp[4*iat+1][4*jat+2] = amp[iat] * amp[jat]
+                mamp[4*iat+1][4*jat+3] = amp[iat] * amp[jat]
+                mamp[4*iat+2][4*jat+1] = amp[iat] * amp[jat]
+                mamp[4*iat+2][4*jat+2] = amp[iat] * amp[jat]
+                mamp[4*iat+2][4*jat+3] = amp[iat] * amp[jat]
+                mamp[4*iat+3][4*jat+1] = amp[iat] * amp[jat]
+                mamp[4*iat+3][4*jat+2] = amp[iat] * amp[jat]
+                mamp[4*iat+3][4*jat+3] = amp[iat] * amp[jat]
     
     # for i in range(len(om)):
     #     for j in range(len(om)):
     #         if abs(om[i][j] - om[j][i]) > 1e-6:
     #             print ("ERROR", i, j, om[i][j], om[j][i])
-    return om
+    if check_symmetric(om) and check_pos_def(om):
+        return om, mamp
+    else:
+        raise Exception("Gaussian Overlap Matrix is not symmetric and positive definite!")
 
 
 
@@ -184,10 +209,10 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
         l = 2
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    if check_symmetric(gom) and check_pos_def(gom):
-        lamda_gom, Varr_gom = np.linalg.eig(gom)
-        lamda_gom = np.real(lamda_gom)
+    om, mamp = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    gom = om * mamp
+    lamda_gom, Varr_gom = np.linalg.eig(gom)
+    lamda_gom = np.real(lamda_gom)
     # Adding null vectors to eigenvector matrix Varr_gom corresponding to zero eigenvalues in fp
     lamda_gom_list = lamda_gom.tolist()
     null_Varr = np.vstack( (np.zeros_like(Varr_gom[:, 0]), ) ).T
@@ -199,30 +224,30 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     lamda_gom = np.array(lamda_gom_list, float)
     
     # Sort eigen_val & eigen_vec joint matrix in corresponding descending order of eigen_val
-    lamda_Varr_om = np.vstack((lamda_om, Varr_om))
-    # sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()]
-    sorted_lamda_Varr_om = lamda_Varr_om[ :, lamda_Varr_om[0].argsort()[::-1]]
-    sorted_Varr_om = sorted_lamda_Varr_om[1:, :]
+    lamda_Varr_gom = np.vstack((lamda_gom, Varr_gom))
+    # sorted_lamda_Varr_om = lamda_Varr_gom[ :, lamda_Varr_gom[0].argsort()]
+    sorted_lamda_Varr_gom = lamda_Varr_gom[ :, lamda_Varr_gom[0].argsort()[::-1]]
+    sorted_Varr_gom = sorted_lamda_Varr_gom[1:, :]
     
-    N_vec = len(sorted_Varr_om[0])
+    N_vec = len(sorted_Varr_gom[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     # D_fp = np.zeros((nx*lseg, 1))
-    D_om = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n, icenter)
+    D_gom = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n, icenter)
     if x == 0:
-        Dx_om = D_om[0, :, :]
+        Dx_gom = D_gom[0, :, :].copy()
         for i in range(N_vec):
-            Dx_mul_V_om = np.matmul(Dx_om, sorted_Varr_om[:, i])
-            D_fp[i][0] = np.matmul(sorted_Varr_om[:, i].T, Dx_mul_V_om)
+            Dx_mul_V_gom = np.matmul(Dx_gom, sorted_Varr_gom[:, i])
+            D_fp[i][0] = np.matmul(sorted_Varr_gom[:, i].T, Dx_mul_V_gom)
     elif x == 1:
-        Dy_om = D_om[1, :, :]
+        Dy_gom = D_gom[1, :, :].copy()
         for j in range(N_vec):
-            Dy_mul_V_om = np.matmul(Dy_om, sorted_Varr_om[:, j])
-            D_fp[j][0] = np.matmul(sorted_Varr_om[:, j].T, Dy_mul_V_om)
+            Dy_mul_V_gom = np.matmul(Dy_gom, sorted_Varr_gom[:, j])
+            D_fp[j][0] = np.matmul(sorted_Varr_gom[:, j].T, Dy_mul_V_gom)
     elif x == 2:
-        Dz_om = D_om[2, :, :]
+        Dz_gom = D_gom[2, :, :].copy()
         for k in range(N_vec):
-            Dz_mul_V_om = np.matmul(Dz_om, sorted_Varr_om[:, k])
-            D_fp[k][0] = np.matmul(sorted_Varr_om[:, k].T, Dz_mul_V_om)
+            Dz_mul_V_gom = np.matmul(Dz_gom, sorted_Varr_gom[:, k])
+            D_fp[k][0] = np.matmul(sorted_Varr_gom[:, k].T, Dz_mul_V_gom)
     else:
         print("Error: Wrong x value! x can only be 0,1,2")
     
@@ -247,10 +272,10 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
         l = 2
     amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
-    # gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    # if check_symmetric(gom) and check_pos_def(gom):
-        # lamda_gom, Varr_gom = np.linalg.eig(gom)
-        # lamda_gom = np.real(lamda_gom)
+    # om, mamp = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    # gom = om * mamp
+    # lamda_gom, Varr_gom = np.linalg.eig(gom)
+    # lamda_gom = np.real(lamda_gom)
     # N_vec = len(Varr_gom[0])
     nat = len(rxyz_sphere)
     D_fp_mat = np.zeros((3, nx*lseg, nat)) + 1j*np.zeros((3, nx*lseg, nat))
@@ -299,9 +324,9 @@ def get_fp_nonperiodic(rxyz, znucls):
     amp = [1.0] * len(rxyz)
     for x in znucls:
         rcov.append(rcovdata.rcovdata[x][2])
-    gom = get_gom(1, rxyz, rcov, amp)
-    if check_symmetric(gom) and check_pos_def(gom):
-        fp = np.linalg.eigvalsh(gom)
+    om, mamp = get_gom(1, rxyz, rcov, amp)
+    gom = om * mamp
+    fp = np.linalg.eigvalsh(gom)
     fp = sorted(fp, reverse = True)
     fp = np.array(fp, float)
     return fp
@@ -404,10 +429,10 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     # full overlap matrix
     n_sphere = len(rxyz_sphere)
     nid = lseg * n_sphere
-    gom = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
-    if check_symmetric(gom) and check_pos_def(gom):
-        vals, vecs = np.linalg.eigh(gom)
-        # vals = np.real(vals)
+    om, mamp = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
+    gom = om * mamp
+    vals, vecs = np.linalg.eigh(gom)
+    # vals = np.real(vals)
     # fp0 = np.zeros(nx*lseg)
     fp0 = np.zeros((nx*lseg, 1))
     for i in range(len(vals)):
@@ -635,10 +660,12 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                   nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, i_atom)
                     kat_in_j_sphere, kat_j = get_common_sphere(ntyp, \
                                   nx, lmax, lat, rxyz_new, types, znucl, cutoff, k_atom, j_atom)
-                    print("kat_in_i_sphere=", kat_in_i_sphere, "kat_i=", kat_i)
-                    print("kat_in_j_sphere=", kat_in_j_sphere, "kat_j=", kat_j)
-                    print("fp_shape=", fp_iat.shape)
-                    print("D_fp_mat_shape=", D_fp_mat_iat.shape)
+                    
+                    # print("kat_in_i_sphere=", kat_in_i_sphere, "kat_i=", kat_i)
+                    # print("kat_in_j_sphere=", kat_in_j_sphere, "kat_j=", kat_j)
+                    # print("fp_shape=", fp_iat.shape)
+                    # print("D_fp_mat_shape=", D_fp_mat_iat.shape)
+                    
                     if kat_in_i_sphere == True and kat_in_j_sphere == True:
                         diff_D_fp_x = D_fp_mat_iat[0, :, kat_i] - D_fp_mat_jat[0, :, kat_j]
                         diff_D_fp_y = D_fp_mat_iat[1, :, kat_i] - D_fp_mat_jat[1, :, kat_j]
