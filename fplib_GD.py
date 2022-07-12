@@ -368,6 +368,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         xi, yi, zi = rxyz[iat]
         n_sphere = 0
         for jat in range(nat):
+            rcovj = rcovdata.rcovdata[znucl[types[jat]-1]][2]
             for ix in range(-ixyz, ixyz+1):
                 for iy in range(-ixyz, ixyz+1):
                     for iz in range(-ixyz, ixyz+1):
@@ -382,7 +383,8 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                             amp.append((1.0-d2*fc)**NC)
                             # print (1.0-d2*fc)**NC
                             rxyz_sphere.append([xj, yj, zj])
-                            rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2])
+                            # rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2])
+                            rcov_sphere.append(rcovj)
                             sphere_id_list.append([ix, iy, iz, jat])
                             if [ix, iy, iz] == [0, 0, 0] and jat == iat:
                                 ityp_sphere = 0
@@ -450,6 +452,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     for i in range(len(vectmp)):
         pvecs.append(vectmp[len(vectmp)-1-i])
     
+    pvec = pvecs[0]
     # contracted overlap matrix
     if contract:
         nids = l * (ntyp + 1)
