@@ -249,7 +249,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
             Dz_mul_V_gom = np.matmul(Dz_gom, sorted_Varr_gom[:, k])
             D_fp[k][0] = np.matmul(sorted_Varr_gom[:, k].T, Dz_mul_V_gom)
     else:
-        print("Error: Wrong x value! x can only be 0,1,2")
+        raise Exception("Error: Wrong x value! x can only be 0,1,2")
     
     # D_fp = np.real(D_fp)
     # print("D_fp {0:d} = {1:s}".format(x, np.array_str(D_fp, precision=6, suppress_small=False)) )
@@ -776,10 +776,6 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     step_size = 1e-4
     const_factor = 1.0e+31
     '''
-    del_fp_dist = 0.0
-    rxyz_left = rxyz.copy()
-    rxyz_right = rxyz.copy()
-    rxyz_delta = np.zeros_like(rxyz)
     for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         finite_diff = np.zeros((len(rxyz_new), 3))
@@ -790,6 +786,8 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
         rxyz_new = np.add(rxyz_new, rxyz_delta)
         for k in range(3):
             for i_atom in range(len(rxyz)):
+                rxyz_left = rxyz.copy()
+                rxyz_right = rxyz.copy()
                 h = rxyz_delta[i_atom][k]
                 rxyz_left[i_atom][k] = rxyz_left[i_atom][k] - h
                 rxyz_right[i_atom][k] = rxyz_right[i_atom][k] + h
@@ -852,9 +850,9 @@ def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
         sum_del_fp_left = np.zeros(3)
         sum_del_fp = np.zeros(3)
         sum_del_fp_right = np.zeros(3)
-        fp_dist_0 = 0.0
-        fp_dist_new = 0.0
-        fp_dist_del = 0.0
+        # fp_dist_0 = 0.0
+        # fp_dist_new = 0.0
+        # fp_dist_del = 0.0
         rxyz_delta = step_size*get_rxyz_delta(rxyz)
         rxyz_left = rxyz_new.copy()
         rxyz_new = np.add(rxyz_new, rxyz_delta)
@@ -975,14 +973,16 @@ def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                     2.0*np.real( np.matmul( diff_fp_right.T, diff_D_fp_y_right ) )
                 del_fp_right[i_atom][2] = del_fp_right[i_atom][2] + \
                                     2.0*np.real( np.matmul( diff_fp_right.T, diff_D_fp_z_right ) )
-                
-                fp_dist_0 = fp_dist_0 + get_fpdist(ntyp, types, fp_iat_0, fp_jat_0)
-                fp_dist_new = fp_dist_new + get_fpdist(ntyp, types, fp_iat, fp_jat)
-                fp_dist_del = fp_dist_new - fp_dist_0
                 del_fp_dist = del_fp_dist + np.vdot(rxyz_delta[i_atom], del_fp[i_atom])
                 
                 
             # del_fp_dist = del_fp_dist + np.vdot(rxyz_delta[i_atom], del_fp[i_atom])
+        
+        # fp_dist_0 = fp_dist_0 + get_fp_energy(lat, rxyz, types, contract, ntyp, nx, lmax, \
+        #                                       znucl, cutoff)
+        # fp_dist_new = fp_dist_new + get_fp_energy(lat, rxyz_new, types, contract, ntyp, nx, lmax, \
+        #                                       znucl, cutoff)
+        # fp_dist_del = fp_dist_new - fp_dist_0
         
         sum_del_fp_left = np.sum(del_fp_left, axis=0)
         sum_del_fp = np.sum(del_fp, axis=0)
