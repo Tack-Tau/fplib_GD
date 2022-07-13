@@ -620,7 +620,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     lmax = 0
     cutoff = 6.5
     znucl = np.array([3], int)
-    lat, rxyz, types = fplib_GD.readvasp(v1)
+    lat, rxyz, types = readvasp(v1)
     contract = False
     i_iter = 0
     iter_max = 20
@@ -704,7 +704,8 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                     del_fp[1] = temp_sum[1]
                     del_fp[2] = temp_sum[2]
 
-                    fpdist_temp_num = fpdist_error + fplib_GD.get_fpdist(ntyp, types, fp_iat, fp_jat)
+                    fpdist_temp_num = fpdist_error + get_fp_energy(lat, rxyz_new, types, contract, \
+                                                                   ntyp, nx, lmax, znucl, cutoff)
                     fpdist_temp_sum = fp_dist + fpdist_temp_num
                     fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
                     fp_dist = fpdist_temp_sum
@@ -723,7 +724,8 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                                         2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_y ) )
                     del_fp[i_atom][2] = del_fp[i_atom][2] + \
                                         2.0*np.real( np.matmul( diff_fp.T, diff_D_fp_z ) )
-                    # fp_dist = fp_dist + get_fpdist(ntyp, types, fp_iat, fp_jat)
+                    # fp_dist = fp_dist + get_fp_energy(lat, rxyz_new, types, contract, ntyp, \
+                    #                                   nx, lmax, znucl, cutoff)
 
                     # print("del_fp = ", del_fp)
                     # rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
@@ -776,47 +778,28 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     '''
     del_fp_dist = 0.0
     rxyz_left = rxyz.copy()
-    rxyz_new = rxyz.copy()
     rxyz_right = rxyz.copy()
     rxyz_delta = np.zeros_like(rxyz)
     for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         finite_diff = np.zeros((len(rxyz_new), 3))
         sum_del_fp = np.zeros(3)
-        fp_dist_0 = 0.0
-        fp_dist_new = 0.0
-        fp_dist_del = 0.0
+        fp_dist_left = 0.0
+        fp_dist_right = 0.0
         rxyz_delta = step_size*get_rxyz_delta(rxyz)
         rxyz_new = np.add(rxyz_new, rxyz_delta)
-        for i_atom in range(len(rxyz)):
-            for j_atom in range(len(rxyz)):
-                for k in range(3):
-                    h = rxyz_delta[i_atom][k]
-                    # rxyz_left[i_atom][k] = rxyz_left[i_atom][k] - 2.0*h
-                    rxyz_right[i_atom][k] = rxyz_right[i_atom][k] + 2.0*h
-                    
-                    fp_iat_left = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_left, types, znucl, cutoff, i_atom)
-                    fp_jat_left = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_left, types, znucl, cutoff, j_atom)
-                    fp_iat = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_new, types, znucl, cutoff, i_atom)
-                    fp_jat = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_new, types, znucl, cutoff, j_atom)
-                    fp_iat_right = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_right, types, znucl, cutoff, i_atom)
-                    fp_jat_right = \
-                    get_fp(contract, ntyp, nx, lmax, lat, \
-                                              rxyz_right, types, znucl, cutoff, j_atom)
-                    
-                    fp_dist_left = get_fpdist(ntyp, types, fp_iat_left, fp_jat_left)
-                    fp_dist_right = get_fpdist(ntyp, types, fp_iat_right, fp_jat_right)
-                    finite_diff[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
+        for k in range(3):
+            for i_atom in range(len(rxyz)):
+                h = rxyz_delta[i_atom][k]
+                rxyz_left[i_atom][k] = rxyz_left[i_atom][k] - h
+                rxyz_right[i_atom][k] = rxyz_right[i_atom][k] + h
+                
+                fp_dist_left = get_fp_energy(lat, rxyz_left, types, contract, ntyp, nx, lmax, \
+                                              znucl, cutoff)
+                fp_dist_right = get_fp_energy(lat, rxyz_right, types, contract, ntyp, nx, lmax, \
+                                              znucl, cutoff)
+                
+                finite_diff[i_atom][k] = (fp_dist_right - fp_dist_left)/(2.0*h)
                     
         
         # sum_del_fp = np.sum(del_fp, axis=0)
@@ -924,9 +907,7 @@ def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                 diff_fp_left = fp_iat_left - fp_jat_left
                 diff_fp = fp_iat - fp_jat
                 diff_fp_right = fp_iat_right - fp_jat_right
-                # common_count, i_rxyz_sphere_1, i_rxyz_sphere_2 = \
-                # fplib_GD.get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, \
-                #                                 znucl, cutoff, i_atom, j_atom)
+                
                 iat_in_j_sphere_left, iat_j_left = get_common_sphere(ntyp, \
                               nx, lmax, lat, rxyz_left, types, znucl, cutoff, i_atom, j_atom)
                 if iat_in_j_sphere_left:
@@ -1064,8 +1045,7 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
     for i_iter in range(iter_max):
         cell_vol = np.inner( lat[0], np.cross( lat[1], lat[2] ) )
         stress = np.zeros((3, 3))
-        fp_energy = get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
-                                        lmax = 0, znucl = np.array([3], int), cutoff = 6.5)
+        fp_energy = get_fp_energy(lat, rxyz, types, contract, ntyp, nx, lmax, znucl, cutoff)
         strain_delta_tmp = step_size*np.random.randint(1, 9999, (3, 3))/9999
         # Make strain tensor symmetric
         strain_delta = 0.5*(strain_delta_tmp + strain_delta_tmp.T - \
@@ -1083,12 +1063,10 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
                 lat_right = np.multiply(lat, rxyz_ratio_right.T)
                 rxyz_left = np.dot(pos, lat_left)
                 rxyz_right = np.dot(pos, lat_right)
-                fp_energy_left = get_fp_energy(lat_left, rxyz_left, types, contract = False, \
-                                               ntyp = 1, nx = 300, lmax = 0, znucl = \
-                                               np.array([3], int), cutoff = 6.5)
-                fp_energy_right = get_fp_energy(lat_right, rxyz_right, types, contract = False, \
-                                                ntyp = 1, nx = 300, lmax = 0, znucl = \
-                                                np.array([3], int), cutoff = 6.5)
+                fp_energy_left = get_fp_energy(lat_left, rxyz_left, types, contract, \
+                                               ntyp, nx, lmax, znucl, cutoff)
+                fp_energy_right = get_fp_energy(lat_right, rxyz_right, types, contract, \
+                                                ntyp, nx, lmax, znucl, cutoff)
                 stress[m][n] = - (fp_energy_right - fp_energy_left)/(2.0*h*cell_vol)
         #################
         
