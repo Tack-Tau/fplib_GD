@@ -119,7 +119,7 @@ def kron_delta(i,j):
 
 
 # @numba.jit()
-def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
+def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
     # s orbital only lseg == 1
     NC = 3
     wc = cutoff / np.sqrt(2.* NC)
@@ -131,7 +131,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
             for iat in range(nat):
                 for jat in range(nat):
                     d = rxyz[iat] - rxyz[jat]
-                    dnc = rxyz[D_n] - rxyz[icenter]
+                    dnc = rxyz[D_n] - rxyz[0]
                     d2 = np.vdot(d, d)
                     dnc2 = np.vdot(dnc, dnc)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
@@ -149,7 +149,7 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n, icenter):
             for iat in range(nat):
                 for jat in range(nat):
                     d = rxyz[iat] - rxyz[jat]
-                    dnc = rxyz[D_n] - rxyz[icenter]
+                    dnc = rxyz[D_n] - rxyz[0]
                     d2 = np.vdot(d, d)
                     dnc2 = np.vdot(dnc, dnc)
                     r = 0.5/(rcov[iat]**2 + rcov[jat]**2)
@@ -207,7 +207,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     else:
         lseg = 4
         l = 2
-    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     om, mamp = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     gom = om * mamp
@@ -232,7 +232,7 @@ def get_D_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, x, D_n, 
     N_vec = len(sorted_Varr_gom[0])
     D_fp = np.zeros((nx*lseg, 1)) + 1j*np.zeros((nx*lseg, 1))
     # D_fp = np.zeros((nx*lseg, 1))
-    D_gom = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n, icenter)
+    D_gom = get_D_gom(lseg, rxyz_sphere, rcov_sphere, amp, cutoff, D_n)
     if x == 0:
         Dx_gom = D_gom[0, :, :].copy()
         for i in range(N_vec):
@@ -270,7 +270,7 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     else:
         lseg = 4
         l = 2
-    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, rxyz_sphere, rcov_sphere = \
                   get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # om, mamp = get_gom(lseg, rxyz_sphere, rcov_sphere, amp)
     # gom = om * mamp
@@ -296,13 +296,14 @@ def get_D_fp_mat(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
 
 
 def get_common_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat, jat):
-    amp_j, sphere_id_list_j, icenter_j, rxyz_sphere_j, rcov_sphere_j = \
+    amp_j, sphere_id_list_j, rxyz_sphere_j, rcov_sphere_j = \
                 get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, jat)
     nat_j_sphere = len(rxyz_sphere_j)
     iat_in_j_sphere = False
     iat_j = 0
     for j in range(nat_j_sphere):
-        if sphere_id_list_j[j] == [0, 0, 0, iat]:
+        # if sphere_id_list_j[j] == [0, 0, 0, iat]:
+        if np.allclose(rxyz[iat], rxyz_sphere_j[j]):
             iat_in_j_sphere = True
             iat_j = j
             break
@@ -349,7 +350,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         lseg = 4
         l = 2
     ixyz = get_ixyz(lat, cutoff)
-    NC = 3
+    NC = 2
     wc = cutoff / np.sqrt(2.* NC)
     fc = 1.0 / (2.0 * NC * wc**2)
     nat = len(rxyz)
@@ -360,11 +361,12 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         print ("max iat = ", iat)
         sys.exit("Error: ith atom (iat) is out of the boundary of the original unit cell (POSCAR)")
     else:
-        rxyz_sphere = []
-        rcov_sphere = []
+        rxyz_sphere_list = []
+        rcov_sphere_list = []
         sphere_id_list = []
         ind = [0] * (lseg * nx)
         amp = []
+        d2_list = []
         xi, yi, zi = rxyz[iat]
         n_sphere = 0
         for jat in range(nat):
@@ -382,10 +384,12 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                 sys.exit("FP WARNING: the cutoff is too large.")
                             amp.append((1.0-d2*fc)**NC)
                             # print (1.0-d2*fc)**NC
-                            rxyz_sphere.append([xj, yj, zj])
+                            rxyz_sphere_list.append([xj, yj, zj])
+                            d2_list.append(d2)
                             # rcov_sphere.append(rcovdata.rcovdata[znucl[types[jat]-1]][2])
-                            rcov_sphere.append(rcovj)
+                            rcov_sphere_list.append(rcovj)
                             sphere_id_list.append([ix, iy, iz, jat])
+                            # if np.allclose(d2, 0.0):
                             if [ix, iy, iz] == [0, 0, 0] and jat == iat:
                                 ityp_sphere = 0
                                 icenter = n_sphere - 1
@@ -403,7 +407,22 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                                     # ind[il+lseg*(n_sphere-1)] == ityp_sphere * l + 1
                             
         # n_sphere_list.append(n_sphere)
-        rxyz_sphere = np.array(rxyz_sphere, float)
+        d2_arr = np.array(d2_list, float)
+        sphere_id_arr = np.array(sphere_id_list, int)
+        rcov_sphere = np.array(rcov_sphere_list, float)
+        rxyz_sphere = np.array(rxyz_sphere_list, float)
+        d2_sphere_id_arr = np.vstack((d2_arr, sphere_id_arr.T))
+        d2_rcov_arr = np.vstack((d2_arr, rcov_sphere))
+        d2_rxyz_arr = np.vstack((d2_arr, rxyz_sphere.T))
+        sorted_d2_sphere_id_arr = d2_sphere_id_arr[:, d2_sphere_id_arr[0].argsort()]
+        sorted_d2_rcov_arr = d2_rcov_arr[:, d2_rcov_arr[0].argsort()]
+        sorted_d2_rxyz_arr = d2_rxyz_arr[:, d2_rxyz_arr[0].argsort()]
+        sorted_sphere_id_arr = sorted_d2_sphere_id_arr[1:, :].T
+        sorted_rcov_sphere = sorted_d2_rcov_arr[1:, :].flatten()
+        sorted_rxyz_sphere = sorted_d2_rxyz_arr[1:, :].T
+        
+        sorted_sphere_id_list = sorted_sphere_id_arr.astype(int).tolist()
+        sorted_rcov_sphere_list = sorted_rcov_sphere.tolist()
     # for n_iter in range(nx-n_sphere+1):
         # rxyz_sphere.append([0.0, 0.0, 0.0])
         # rxyz_sphere.append([0.0, 0.0, 0.0])
@@ -412,7 +431,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     # print ("n_sphere", n_sphere)
     # print ("rxyz_sphere", rxyz_sphere)
     # print ("rcov_sphere", rcov_sphere)
-    return amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere
+    return amp, sorted_sphere_id_list, sorted_rxyz_sphere, sorted_rcov_sphere_list
 
 
 
@@ -426,7 +445,7 @@ def get_fp(contract, ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         l = 2
     # lfp = []
     sfp = []
-    amp, sphere_id_list, icenter, rxyz_sphere, rcov_sphere = \
+    amp, sphere_id_list, rxyz_sphere, rcov_sphere = \
                    get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat)
     # full overlap matrix
     n_sphere = len(rxyz_sphere)
