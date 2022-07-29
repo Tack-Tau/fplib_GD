@@ -365,7 +365,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         rcov_sphere_list = []
         sphere_id_list = []
         ind = [0] * (lseg * nx)
-        amp = []
+        amp_list = []
         d2_list = []
         xi, yi, zi = rxyz[iat]
         n_sphere = 0
@@ -382,7 +382,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
                             n_sphere += 1
                             if n_sphere > nx:
                                 sys.exit("FP WARNING: the cutoff is too large.")
-                            amp.append((1.0-d2*fc)**NC)
+                            amp_list.append((1.0-d2*fc)**NC)
                             # print (1.0-d2*fc)**NC
                             rxyz_sphere_list.append([xj, yj, zj])
                             d2_list.append(d2)
@@ -409,19 +409,24 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         # n_sphere_list.append(n_sphere)
         d2_arr = np.array(d2_list, float)
         sphere_id_arr = np.array(sphere_id_list, int)
+        amp_arr = np.array(amp_list, float)
         rcov_sphere = np.array(rcov_sphere_list, float)
         rxyz_sphere = np.array(rxyz_sphere_list, float)
         d2_sphere_id_arr = np.vstack((d2_arr, sphere_id_arr.T))
+        d2_amp_arr = np.vstack((d2_arr, amp_arr))
         d2_rcov_arr = np.vstack((d2_arr, rcov_sphere))
         d2_rxyz_arr = np.vstack((d2_arr, rxyz_sphere.T))
         sorted_d2_sphere_id_arr = d2_sphere_id_arr[:, d2_sphere_id_arr[0].argsort()]
+        sorted_d2_amp_arr = d2_amp_arr[:, d2_amp_arr[0].argsort()]
         sorted_d2_rcov_arr = d2_rcov_arr[:, d2_rcov_arr[0].argsort()]
         sorted_d2_rxyz_arr = d2_rxyz_arr[:, d2_rxyz_arr[0].argsort()]
         sorted_sphere_id_arr = sorted_d2_sphere_id_arr[1:, :].T
+        sorted_amp_arr = sorted_d2_amp_arr[1:, :].flatten()
         sorted_rcov_sphere = sorted_d2_rcov_arr[1:, :].flatten()
         sorted_rxyz_sphere = sorted_d2_rxyz_arr[1:, :].T
         
         sorted_sphere_id_list = sorted_sphere_id_arr.astype(int).tolist()
+        sorted_amp_list = sorted_amp_arr.tolist()
         sorted_rcov_sphere_list = sorted_rcov_sphere.tolist()
     # for n_iter in range(nx-n_sphere+1):
         # rxyz_sphere.append([0.0, 0.0, 0.0])
@@ -431,7 +436,7 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
     # print ("n_sphere", n_sphere)
     # print ("rxyz_sphere", rxyz_sphere)
     # print ("rcov_sphere", rcov_sphere)
-    return amp, sorted_sphere_id_list, sorted_rxyz_sphere, sorted_rcov_sphere_list
+    return sorted_amp_list, sorted_sphere_id_list, sorted_rxyz_sphere, sorted_rcov_sphere_list
 
 
 
