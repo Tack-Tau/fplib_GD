@@ -432,10 +432,12 @@ def get_sphere(ntyp, nx, lmax, lat, rxyz, types, znucl, cutoff, iat):
         # rxyz_sphere.append([0.0, 0.0, 0.0])
         # rxyz_sphere.append([0.0, 0.0, 0.0])
     # rxyz_sphere = np.array(rxyz_sphere, float)
-    # print ("amp", amp)
+    # print ("iat=\n", iat)
     # print ("n_sphere", n_sphere)
-    # print ("rxyz_sphere", rxyz_sphere)
-    # print ("rcov_sphere", rcov_sphere)
+    # print ("sorted_amp_list=\n", sorted_amp_list)
+    # print ("sorted_sphere_id_list=\n", sorted_sphere_id_list)
+    # print ("sorted_rxyz_sphere=\n", sorted_rxyz_sphere)
+    # print ("sorted_rcov_sphere_list=\n", sorted_rcov_sphere_list)
     return sorted_amp_list, sorted_sphere_id_list, sorted_rxyz_sphere, sorted_rcov_sphere_list
 
 
