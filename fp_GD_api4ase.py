@@ -19,7 +19,7 @@ class fp_GD_Calculator(Calculator):
     default_parameters = {
                           'contract': False,
                           'ntyp': 1,
-                          'nx': 300,
+                          'nx': 100,
                           'lmax': 0,
                           'cutoff': 6.0,
                           }
