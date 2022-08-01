@@ -187,12 +187,12 @@ def get_D_gom(lseg, rxyz, rcov, amp, cutoff, D_n):
                             D_om[x][4*iat+i_pp+1][4*jat+j_pp+1] = \
                             ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
                             d[x] * stv * amp[iat] * amp[jat] * \
-                            ( kron_delta(x, j_pp) - 2.0 * r * d[i_pp] * d[j_pp] ) + \
-                            ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) * \
-                            stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] + \
-                                                         kron_delta(x, j_pp) * d[i_pp] )  \
-                            -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) * stv * \
-                            ( np.dot(d[i_pp], d[j_pp]) - kron_delta(i_pp, j_pp) * 0.5/r ) \
+                            ( kron_delta(x, j_pp) - 2.0 * r * np.dot( d[i_pp], d[j_pp] ) ) + \
+                            ( kron_delta(iat, D_n) - kron_delta(jat, D_n) ) *                \
+                            stv * amp[iat] * amp[jat] * ( kron_delta(x, i_pp) * d[j_pp] +    \
+                                                         kron_delta(x, j_pp) * d[i_pp] )     \
+                            -2.0 * NC * fc * dnc[x] * (1.0 - dnc2 * fc)**(NC - 1) * stv *    \
+                            ( np.dot(d[i_pp], d[j_pp]) - kron_delta(i_pp, j_pp) * 0.5/r )    \
                             * amp[iat] * amp[jat] * ( kron_delta(iat, D_n) + kron_delta(jat, D_n) )
                 
     return D_om
