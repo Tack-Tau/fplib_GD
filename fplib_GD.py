@@ -685,12 +685,12 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
         sum_del_fp = np.zeros(3)
         # fp_dist = 0.0
         for k_atom in range(len(rxyz_new)):
-            
+            # del_fp = np.zeros((len(rxyz_new), 3))
+            # temp_del_fp = np.zeros((len(rxyz_new), 3))
+            # accum_error = np.zeros((len(rxyz_new), 3))
+            # temp_sum = np.zeros((len(rxyz_new), 3))
             for i_atom in range(len(rxyz_new)):
-                # del_fp = np.zeros(3)
-                # temp_del_fp = np.zeros(3)
-                # accum_error = np.zeros(3)
-                # temp_sum = np.zeros(3)
+                
                 for j_atom in range(len(rxyz_new)):
                     fp_iat = \
                     get_fp(contract, ntyp, nx, lmax, lat, \
@@ -738,24 +738,24 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                     diff_D_fp_x = np.vstack( (np.array(diff_D_fp_x)[::-1], ) ).T
                     diff_D_fp_y = np.vstack( (np.array(diff_D_fp_y)[::-1], ) ).T
                     diff_D_fp_z = np.vstack( (np.array(diff_D_fp_z)[::-1], ) ).T
-                    temp_del_fp[0] = accum_error[0] + np.real( np.vdot( diff_fp.T,  diff_D_fp_x ) )
-                    temp_del_fp[1] = accum_error[1] + np.real( np.vdot( diff_fp.T,  diff_D_fp_y ) )
-                    temp_del_fp[2] = accum_error[2] + np.real( np.vdot( diff_fp.T,  diff_D_fp_z ) )
-                    temp_sum[0] = del_fp[0] + temp_del_fp[0]
-                    temp_sum[1] = del_fp[1] + temp_del_fp[1]
-                    temp_sum[2] = del_fp[2] + temp_del_fp[2]
-                    accum_error[0] = temp_del_fp[0] - (temp_sum[0] - del_fp[0])
-                    accum_error[1] = temp_del_fp[1] - (temp_sum[1] - del_fp[1])
-                    accum_error[2] = temp_del_fp[2] - (temp_sum[2] - del_fp[2])
-                    del_fp[0] = temp_sum[0]
-                    del_fp[1] = temp_sum[1]
-                    del_fp[2] = temp_sum[2]
-
-                    fpdist_temp_num = fpdist_error + get_fp_energy(lat, rxyz_new, types, contract, \
-                                                                   ntyp, nx, lmax, znucl, cutoff)
-                    fpdist_temp_sum = fp_dist + fpdist_temp_num
-                    fpdist_error = fpdist_temp_num - (fpdist_temp_sum - fp_dist)
-                    fp_dist = fpdist_temp_sum
+                    temp_del_fp[k_atom][0] = accum_error[k_atom][0] + \
+                                             2.0*np.real( np.vdot( diff_fp.T,  diff_D_fp_x ) )
+                    temp_del_fp[k_atom][1] = accum_error[k_atom][1] + \
+                                             2.0*np.real( np.vdot( diff_fp.T,  diff_D_fp_y ) )
+                    temp_del_fp[k_atom][2] = accum_error[k_atom][2] + \
+                                             2.0*np.real( np.vdot( diff_fp.T,  diff_D_fp_z ) )
+                    temp_sum[k_atom][0] = del_fp[k_atom][0] + temp_del_fp[k_atom][0]
+                    temp_sum[k_atom][1] = del_fp[k_atom][1] + temp_del_fp[k_atom][1]
+                    temp_sum[k_atom][2] = del_fp[k_atom][2] + temp_del_fp[k_atom][2]
+                    accum_error[k_atom][0] = temp_del_fp[k_atom][0] - \
+                                             (temp_sum[k_atom][0] - del_fp[k_atom][0])
+                    accum_error[k_atom][1] = temp_del_fp[k_atom][1] - \
+                                             (temp_sum[k_atom][1] - del_fp[k_atom][1])
+                    accum_error[k_atom][2] = temp_del_fp[k_atom][2] - \
+                                             (temp_sum[k_atom][2] - del_fp[k_atom][2])
+                    del_fp[k_atom][0] = temp_sum[k_atom][0]
+                    del_fp[k_atom][1] = temp_sum[k_atom][1]
+                    del_fp[k_atom][2] = temp_sum[k_atom][2]
                     '''
 
 
