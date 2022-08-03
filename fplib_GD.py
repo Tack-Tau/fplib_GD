@@ -765,17 +765,17 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                     # print("fp_dim", fp_iat.shape)
                     # print("diff_D_fp_x_dim", diff_D_fp_x.shape)
                     
-                    del_fp[i_atom][0] = del_fp[i_atom][0] + \
+                    del_fp[k_atom][0] = del_fp[k_atom][0] + \
                                         2.0*np.real( np.vdot( diff_fp.T, diff_D_fp_x ) )
-                    del_fp[i_atom][1] = del_fp[i_atom][1] + \
+                    del_fp[k_atom][1] = del_fp[k_atom][1] + \
                                         2.0*np.real( np.vdot( diff_fp.T, diff_D_fp_y ) )
-                    del_fp[i_atom][2] = del_fp[i_atom][2] + \
+                    del_fp[k_atom][2] = del_fp[k_atom][2] + \
                                         2.0*np.real( np.vdot( diff_fp.T, diff_D_fp_z ) )
                     # fp_dist = fp_dist + get_fp_energy(lat, rxyz_new, types, contract, ntyp, \
                     #                                   nx, lmax, znucl, cutoff)
 
                     # print("del_fp = ", del_fp)
-                    # rxyz[i_atom] = rxyz[i_atom] - step_size*del_fp
+                    # rxyz[k_atom] = rxyz[k_atom] - step_size*del_fp
                     '''
                     if max(del_fp) < atol:
                         print ("i_iter = {0:d} \nrxyz_final = \n{1:s}".\
@@ -792,8 +792,8 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                 # rxyz_new[i_atom] = rxyz_new[i_atom] - step_size*del_fp/np.linalg.norm(del_fp)
 
             sum_del_fp = np.sum(del_fp, axis=0)
-            for ii_atom in range(len(rxyz_new)):
-                del_fp[ii_atom, :] = del_fp[ii_atom, :] - sum_del_fp/len(rxyz_new)
+            for kk_atom in range(len(rxyz_new)):
+                del_fp[kk_atom, :] = del_fp[kk_atom, :] - sum_del_fp/len(rxyz_new)
             '''
             print ( "i_iter = {0:d} \nrxyz_final = \n{1:s}".\
                   format(i_iter+1, np.array_str(rxyz_new, precision=6, suppress_small=False)) )
@@ -803,7 +803,7 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
                   format(np.array_str(fp_dist, precision=6, suppress_small=False)) )
             '''
     
-    return del_fp
+    return -del_fp
 
 # Calculate forces using finite difference method
 def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
@@ -862,7 +862,7 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
               format(np.array_str(finite_diff, precision=6, suppress_small=False)) )
         '''
     
-    return finite_diff
+    return -finite_diff
 
 
 
