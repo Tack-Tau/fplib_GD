@@ -135,8 +135,8 @@ class fp_GD_Calculator(Calculator):
             pos = atoms.get_scaled_positions()
             types = fplib_GD.read_types('Li-mp-51.vasp')
             # self.get_potential_energy(atoms)
-        # stress = fplib_GD.get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 100, \
-        #                                 lmax = 0, znucl = np.array([3], int), cutoff = 6.0, \
-        #                                 iter_max = 1, step_size = 1e-4)
-        return np.zeros(6)
+        stress = fplib_GD.get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 100, \
+                                        lmax = 0, znucl = np.array([3], int), cutoff = 6.0, \
+                                        iter_max = 1, step_size = 1e-4)
+        return stress
      
