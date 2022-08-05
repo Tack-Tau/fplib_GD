@@ -61,12 +61,12 @@ class fp_GD_Calculator(Calculator):
                  atoms = None, 
                  **kwargs):
         
-        # self._atoms = None
+        self._atoms = None
         self.cell_file = 'POSCAR'
         self.results = {}
         self.restart()
         if atoms is None :
-            atoms = ase.io.read(cell_file)
+            atoms = ase.io.read(self.cell_file)
         self.atoms = atoms
         self.atoms_save = None
         
@@ -160,7 +160,7 @@ class fp_GD_Calculator(Calculator):
         self.results['forces'] = self.get_forces(atoms)
         self.results['stress'] = self.get_stress(atoms)
         
-    
+    '''
     def check_state(self, atoms, tol = 1e-15):
         """Check for system changes since last calculation."""
         def compare_dict(d1, d2):
@@ -187,7 +187,7 @@ class fp_GD_Calculator(Calculator):
                 system_changes.append(param_string)
 
         return system_changes
-    
+    '''
     
     def _store_param_state(self):
         """Store current parameter state"""
@@ -311,12 +311,13 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
-        if self.check_restart(atoms):
+        if self.check_restart(atoms) or self._energy is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             rxyz = atoms.get_positions()
             self._energy = \
-            fplib_GD.get_fp_energy(lat, rxyz, types, znucl, 
+            fplib_GD.get_fp_energy(lat, rxyz, types, 
+                                   znucl = znucl, 
                                    contract = contract, 
                                    ntyp = ntyp, 
                                    nx = nx, 
@@ -334,13 +335,14 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
-        if self.check_restart(atoms):
+        if self.check_restart(atoms) or self._forces is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             rxyz = atoms.get_positions()
             # self.get_potential_energy(atoms)
             self._forces = \
-            fplib_GD.get_fp_forces(lat, rxyz, types, znucl, 
+            fplib_GD.get_fp_forces(lat, rxyz, types, 
+                                   znucl = znucl, 
                                    contract = contract, 
                                    ntyp = ntyp, 
                                    nx = nx, 
@@ -362,13 +364,14 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
-        if self.check_restart(atoms):
+        if self.check_restart(atoms) or self._stress is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
             pos = atoms.get_scaled_positions()
             # self.get_potential_energy(atoms)
             self._stress = \
-            fplib_GD.get_FD_stress(lat, pos, types, znucl, 
+            fplib_GD.get_FD_stress(lat, pos, types, 
+                                   znucl = znucl, 
                                    contract = contract, 
                                    ntyp = ntyp, 
                                    nx = nx, 

@@ -619,17 +619,14 @@ def get_fpdist(ntyp, types, fp1, fp2, mx = False):
         return fpd
 
 # Calculate crystal atomic finger print energy
-def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
-                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5):
-    '''
-    ntyp = 1
-    nx = 300
-    lmax = 0
-    cutoff = 6.5
-    znucl = np.array([3], int)
-    lat, rxyz, types = readvasp(v1)
-    contract = False
-    '''
+def get_fp_energy(lat, rxyz, types, 
+                  znucl = np.array([3], int), 
+                  contract = False, 
+                  ntyp = 1, 
+                  nx = 300, 
+                  lmax = 0, 
+                  cutoff = 6.5):
+    
     fp_dist = 0.0
     fpdist_error = 0.0
     temp_num = 0.0
@@ -658,22 +655,16 @@ def get_fp_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     return fp_dist
 
 #Calculate crystal atomic finger print force and steepest descent update
-def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
-                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                  iter_max = 1, step_size = 1e-4):
-    '''
-    ntyp = 1
-    nx = 300
-    lmax = 0
-    cutoff = 6.5
-    znucl = np.array([3], int)
-    lat, rxyz, types = readvasp(v1)
-    contract = False
-    i_iter = 0
-    iter_max = 20
-    atol = 1e-6
-    step_size = 1e-4
-    '''
+def get_fp_forces(lat, rxyz, types, 
+                  znucl = np.array([3], int), 
+                  contract = False, 
+                  ntyp = 1, 
+                  nx = 300, 
+                  lmax = 0, 
+                  cutoff = 6.5, 
+                  iter_max = 1, 
+                  step_size = 1e-4):
+    
     rxyz_new = rxyz.copy()
     # fp_dist = 0.0
     # fpdist_error = 0.0
@@ -806,23 +797,16 @@ def get_fp_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     return -del_fp
 
 # Calculate forces using finite difference method
-def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
-                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                  iter_max = 1, step_size = 1e-4):
-    '''
-    ntyp = 1
-    nx = 300
-    lmax = 0
-    cutoff = 6.5
-    znucl = np.array([3], int)
-    lat, rxyz, types = readvasp(v1)
-    contract = False
-    i_iter = 0
-    iter_max = 4
-    atol = 1.0e-6
-    step_size = 1e-4
-    const_factor = 1.0e+31
-    '''
+def get_FD_forces(lat, rxyz, types, 
+                  znucl = np.array([3], int), 
+                  contract = False, 
+                  ntyp = 1, 
+                  nx = 300, 
+                  lmax = 0, 
+                  cutoff = 6.5, 
+                  iter_max = 1, 
+                  step_size = 1e-4):
+    
     for i_iter in range(iter_max):
         del_fp = np.zeros((len(rxyz_new), 3))
         finite_diff = np.zeros((len(rxyz_new), 3))
@@ -868,23 +852,16 @@ def get_FD_forces(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
 
 
 # Calculate numerical inegration using Simpson's rule
-def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
-                       lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                       iter_max = 1, step_size = 1e-4):
-    '''
-    ntyp = 1
-    nx = 300
-    lmax = 0
-    cutoff = 6.5
-    znucl = np.array([3], int)
-    lat, rxyz, types = readvasp(v1)
-    contract = False
-    i_iter = 0
-    iter_max = 4
-    atol = 1.0e-6
-    step_size = 1e-4
-    const_factor = 1.0e+31
-    '''
+def get_simpson_energy(lat, rxyz, types, 
+                       znucl = np.array([3], int), 
+                       contract = False, 
+                       ntyp = 1, 
+                       nx = 300, 
+                       lmax = 0, 
+                       cutoff = 6.5, 
+                       iter_max = 1, 
+                       step_size = 1e-4):
+    
     del_fp_dist = 0.0
     rxyz_left = rxyz.copy()
     rxyz_new = rxyz.copy()
@@ -1058,23 +1035,15 @@ def get_simpson_energy(lat, rxyz, types, contract = False, ntyp = 1, nx = 300, \
     return del_fp_dist
 
 # Calculate Cauchy stress tensor using finite difference
-def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
-                  lmax = 0, znucl = np.array([3], int), cutoff = 6.5, \
-                  iter_max = 1, step_size = 1e-4):
-    '''
-    ntyp = 1
-    nx = 300
-    lmax = 0
-    cutoff = 6.5
-    znucl = np.array([3], int)
-    lat, rxyz, types = readvasp(v1)
-    contract = False
-    i_iter = 0
-    iter_max = 4
-    atol = 1.0e-6
-    step_size = 1e-4
-    const_factor = 1.0e+31
-    '''
+def get_FD_stress(lat, pos, types, znucl = np.array([3], int), 
+                  contract = False, 
+                  ntyp = 1, 
+                  nx = 300, 
+                  lmax = 0, 
+                  cutoff = 6.5, 
+                  iter_max = 1, 
+                  step_size = 1e-4):
+    
     rxyz = np.dot(pos, lat)
     fp_energy = 0.0
     fp_energy_new = 0.0
@@ -1092,7 +1061,7 @@ def get_FD_stress(lat, pos, types, contract = False, ntyp = 1, nx = 300, \
     for i_iter in range(iter_max):
         cell_vol = np.inner( lat[0], np.cross( lat[1], lat[2] ) )
         stress = np.zeros((3, 3))
-        fp_energy = get_fp_energy(lat, rxyz, types, contract, ntyp, nx, lmax, znucl, cutoff)
+        fp_energy = get_fp_energy(lat, rxyz, types, znucl, contract, ntyp, nx, lmax, cutoff)
         strain_delta_tmp = step_size*np.random.randint(1, 9999, (3, 3))/9999
         # Make strain tensor symmetric
         strain_delta = 0.5*(strain_delta_tmp + strain_delta_tmp.T - \
