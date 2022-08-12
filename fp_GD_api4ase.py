@@ -64,6 +64,7 @@ class fp_GD_Calculator(Calculator):
         self._atoms = None
         self.cell_file = 'POSCAR'
         self.results = {}
+        self.default_parameters = {}
         self.restart()
         if atoms is None :
             atoms = ase.io.read(self.cell_file)
@@ -101,13 +102,14 @@ class fp_GD_Calculator(Calculator):
             self.command = kwargs.pop('command')
 
         changed_parameters.update(Calculator.set(self, **kwargs))
+        self.default_parameters.update(Calculator.set(self, **kwargs))
         
         if changed_parameters:
             self.clear_results()  # We don't want to clear atoms
         if kwargs:
-            # If we make any changes to Vasp input, we always reset
-            # GenerateVaspInput.set(self, **kwargs)
-            self.results.clear()
+            for key in kwargs:
+                self.default_parameters[key] = kwargs[key]
+                self.results.clear()
 
     def reset(self):
         self.atoms = None
@@ -311,6 +313,16 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
+        '''
+        print("fp_energy parameters=\n",
+              "contract=", contract,
+              "ntyp=", ntyp,
+              "nx=", nx,
+              "lmax=", lmax,
+              "cutoff=", cutoff,
+              "types=", types,
+              "znucl=", znucl)
+        '''
         if self.check_restart(atoms) or self._energy is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
@@ -335,6 +347,16 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
+        '''
+        print("fp_forces parameters=\n",
+              "contract=", contract,
+              "ntyp=", ntyp,
+              "nx=", nx,
+              "lmax=", lmax,
+              "cutoff=", cutoff,
+              "types=", types,
+              "znucl=", znucl)
+        '''
         if self.check_restart(atoms) or self._forces is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]
@@ -364,6 +386,16 @@ class fp_GD_Calculator(Calculator):
         znucl = self.znucl
         iter_max = self.iter_max
         step_size = self.step_size
+        '''
+        print("fp_stress parameters=\n",
+              "contract=", contract,
+              "ntyp=", ntyp,
+              "nx=", nx,
+              "lmax=", lmax,
+              "cutoff=", cutoff,
+              "types=", types,
+              "znucl=", znucl)
+        '''
         if self.check_restart(atoms) or self._stress is None:
             # write_vasp('input.vasp', atoms, direct=True)
             lat = atoms.cell[:]

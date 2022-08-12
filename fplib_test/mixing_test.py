@@ -52,7 +52,14 @@ from quippy.potential import Potential
 
 calc1 = Potential(param_filename='./gp_iter6_sparse9k.xml')
 
-calc2 = fp_GD_Calculator()
+calc2 = fp_GD_Calculator(
+            cutoff = 6.0,
+            contract = False,
+            znucl = np.array([3], int),
+            lmax = 0,
+            nx = 300,
+            ntyp = 1
+            )
 # calc = MixedCalculator(calc1, calc2)
 # atoms.set_calculator(calc)
 

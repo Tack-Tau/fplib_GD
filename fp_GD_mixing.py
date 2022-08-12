@@ -141,7 +141,7 @@ class MixedCalculator(LinearCombinationCalculator):
                 self.weights[1] = \
                                 ((self.iter_max - 3 * (self.iter // 3) ) / self.iter_max) \
                                  ** self.nonLinear_const * (self.f_ratio - 0.0)
-        # print("weights=", self.weights)
+        print("weights=", self.weights)
 
     def calculate(self, 
                   atoms = None, 
