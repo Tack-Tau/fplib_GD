@@ -250,6 +250,16 @@ class fp_GD_Calculator(Calculator):
         self.default_parameters['cutoff'] = cutoff
     
     @property
+    def znucl(self):
+        """Access the znucl array in default_parameters dict"""
+        return self.default_parameters['znucl']
+
+    @znucl.setter
+    def znucl(self, znucl):
+        """Direct access for setting the znucl array"""
+        self.set(znucl = znucl)
+            
+    @property
     def types(self):
         """Direct access to the types array"""
         return fplib_GD.read_types(self.cell_file)
@@ -258,17 +268,7 @@ class fp_GD_Calculator(Calculator):
     def types(self, types):
         """Direct access for setting the types array"""
         self.set(types = types)
-    
-    @property
-    def znucl(self):
-        """Direct access to the znucl array"""
-        return np.array([3], int)
 
-    @znucl.setter
-    def znucl(self, znucl):
-        """Direct access for setting the znucl array"""
-        self.set(znucl = znucl)
-    
     @property
     def iter_max(self):
         """Direct access to the iter_max"""
