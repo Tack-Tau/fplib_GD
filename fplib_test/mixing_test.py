@@ -24,7 +24,7 @@ calc1 = Vasp( command = 'mpirun -n 16 /home/lz432/apps/vasp.6.3.0_intel/bin/vasp
               xc = 'PBE',
               setups = 'recommended',
               txt = 'vasp.out',
-              prec = 'Accurate',
+              prec = 'Normal',
               # ediff = 1.0e-8,
               # ediffg = -1.0e-5,
               encut = 520.0,
