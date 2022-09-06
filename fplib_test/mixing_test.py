@@ -87,7 +87,7 @@ print ("mixed_forces:\n", atoms.get_forces())
 
 # af = atoms
 # af = StrainFilter(atoms)
-af = UnitCellFilter(atoms)
+af = UnitCellFilter(atoms, scalar_pressure = 0.062415)
 
 ############################## Relaxation method ##############################\
 
