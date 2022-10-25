@@ -80,7 +80,7 @@ Use other than academic and non-commercial use as above is deemed to be commerci
 ## END OF TERMS AND CONDITIONS
 
 ## Appendix: Suggested code header and licensing information
-fplib_GD is © 2021, Shuo Tao and Li Zhu
+fplib_GD is © 2022, Shuo Tao and Li Zhu
 
 fplib_GD is published and distributed under the Academic Software License v1.0 (ASL). 
 
